@@ -24,7 +24,7 @@ print("\n--- Statistiques des digrammes ---")
 texte_analyse = "BONJOUR TOUT LE MONDE BONJOUR A TOUS LES AMIS"
 resultats = statistiques_digrammes(texte_analyse)
 
-    for digramme, donnees in resultats.items() :
+for digramme, donnees in resultats.items() :
     print(f"'{digramme}' : {donnees['occurrences']} fois ({donnees['pourcentage']} %)")
 
 
