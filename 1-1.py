@@ -1,5 +1,6 @@
 from collections import Counter
 import json
+import unicodedata
 import urllib.request
 from urllib.parse import unquote, urlencode, urlsplit
 
@@ -38,6 +39,14 @@ def analyser_page_web(url):
             raise ValueError(f"Page MediaWiki introuvable : {titre}")
 
         texte_propre = pages[0].get("extract", "").upper()
+        texte_propre = unicodedata.normalize("NFD", texte_propre)
+        texte_propre = "".join(
+            caractere
+            for caractere in texte_propre
+            if not unicodedata.combining(caractere)
+            and ("A" <= caractere <= "Z" or caractere.isspace())
+        )
+        texte_propre = " ".join(texte_propre.split())
 
         # 3. Calcul des statistiques
         total_caracteres = len(texte_propre)
@@ -50,10 +59,11 @@ def analyser_page_web(url):
         print(f"=== Statistiques pour l'URL : {url} ===")
         print(f"Nombre total de caractères (avec espaces) : {total_caracteres}")
         print(f"Nombre total de caractères (sans espaces) : {total_sans_espaces}")
-        print("\n--- Top 15 des caractères les plus fréquents ---")
+        print("\n--- Top 27 des caractères les plus fréquents ---")
 
-        # Tri et affichage des 15 caractères les plus utilisés
-        for caractere, frequence in compteur.most_common(15):
+
+        # Tri et affichage des 27 caractères les plus utilisés
+        for caractere, frequence in compteur.most_common(27):
             # Remplacement visuel pour les espaces pour plus de clarté
             nom_caractere = (
                 f"'{caractere}'" if caractere != " " else "'Espace' "
