@@ -62,9 +62,7 @@ def analyser_page_web(url):
         print("\n--- Top 27 des caractères les plus fréquents ---")
 
 
-        # Tri et affichage des 27 caractères les plus utilisés
         for caractere, frequence in compteur.most_common(27):
-            # Remplacement visuel pour les espaces pour plus de clarté
             nom_caractere = (
                 f"'{caractere}'" if caractere != " " else "'Espace' "
             )

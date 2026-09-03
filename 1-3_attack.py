@@ -75,7 +75,7 @@ if __name__ == "__main__":
     
     print("--- Résultats de l'attaque ---")
     if cle_trouvee:
-        print(f"✅ Clé trouvée : {cle_trouvee}")
-        print(f"✅ Texte décodé : {texte_trouve}")
+        print(f" Clé trouvée : {cle_trouvee}")
+        print(f" Texte décodé : {texte_trouve}")
     else:
         print("❌ Échec : La clé n'était pas dans le dictionnaire fourni.")
