@@ -1,33 +1,43 @@
 from collections import Counter
-import re
+import json
 import urllib.request
-from urllib.parse import quote
+from urllib.parse import unquote, urlencode, urlsplit
 
 
 def analyser_page_web(url):
     try:
-        # 1. Récupération de la page web
-        headers = {"User-Agent": "Mozilla/5.0"}
-        # Encode les caractères non ASCII (ex. « é ») pour former une URL valide.
-        url_encodee = quote(url, safe=":/?&=#%")
-        requete = urllib.request.Request(url_encodee, headers=headers)
+        # 1. Récupération du texte brut par l'API MediaWiki
+        morceaux_url = urlsplit(url)
+        if "/wiki/" not in morceaux_url.path:
+            raise ValueError("L'URL doit être une page MediaWiki (/wiki/Titre)")
 
-        with urllib.request.urlopen(requete) as reponse:
-            # Décodage du contenu en texte brut (UTF-8)
-            html_brut = reponse.read().decode("utf-8")
+        titre = unquote(morceaux_url.path.split("/wiki/", 1)[1])
+        if not titre:
+            raise ValueError("Le titre de la page MediaWiki est vide")
 
-        # 2. Nettoyage du HTML pour ne garder que le texte visible
-        # Supprime les balises <script> et <style> et leur contenu
-        texte_propre = re.sub(
-            r"<script[^>]*>[\s\S]*?</script>|<style[^>]*>[\s\S]*?</style>",
-            "",
-            html_brut,
+        api_url = f"{morceaux_url.scheme}://{morceaux_url.netloc}/w/api.php"
+        parametres = {
+            "action": "query",
+            "prop": "extracts",
+            "explaintext": "1",
+            "redirects": "1",
+            "titles": titre,
+            "format": "json",
+            "formatversion": "2",
+        }
+        requete = urllib.request.Request(
+            f"{api_url}?{urlencode(parametres)}",
+            headers={"User-Agent": "AnalyseurTexte/1.0"},
         )
-        # Supprime toutes les autres balises HTML
-        texte_propre = re.sub(r"<[^>]+>", "", texte_propre)
-        # Remplace les entités d'espaces multiples par un seul espace
-        texte_propre = " ".join(texte_propre.split())
-        texte_propre = texte_propre.upper()
+
+        with urllib.request.urlopen(requete, timeout=15) as reponse:
+            donnees = json.load(reponse)
+
+        pages = donnees.get("query", {}).get("pages", [])
+        if not pages or "missing" in pages[0]:
+            raise ValueError(f"Page MediaWiki introuvable : {titre}")
+
+        texte_propre = pages[0].get("extract", "").upper()
 
         # 3. Calcul des statistiques
         total_caracteres = len(texte_propre)
@@ -49,7 +59,7 @@ def analyser_page_web(url):
                 f"'{caractere}'" if caractere != " " else "'Espace' "
             )
             
-            pourcentage = (frequence / total_caracteres) * 100
+            pourcentage = (frequence / total_caracteres) * 100 if total_caracteres else 0
 
             print(
                 f"{nom_caractere} : {frequence} fois ({pourcentage:.2f}%)"
