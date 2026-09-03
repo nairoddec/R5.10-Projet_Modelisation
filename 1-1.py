@@ -81,5 +81,5 @@ def analyser_page_web(url):
 
 
 #url_cible = "https://fr.wikipedia.org/wiki/Wikipédia:Accueil_principal"
-url_cible = "https://fr.wikipedia.org/wiki/A"
+url_cible ="https://fr.wikipedia.org/wiki/Cosplay"
 analyser_page_web(url_cible)
