@@ -33,7 +33,7 @@ def dechiffrer(texte_chiffre, cle):
 if __name__ == "__main__":
     # 1. Le message clair (en majuscules, selon notre alphabet)
     message_original = "ATTAQUE FREQUENTIELLE SUR WIKIPEDIA"
-    print(f"Message original   : '{message_original}'")
+    print(f"Message original : '{message_original}'")
     print("-" * 50)
 
     # 2. Génération et vérification de la clé
@@ -41,20 +41,20 @@ if __name__ == "__main__":
     verifier_cle(ma_cle)
     # Affiche un extrait de la clé (les 5 premières substitutions) pour vérifier
     extrait_cle = {k: ma_cle[k] for k in list(ma_cle)[:5]}
-    print(f"Clé générée (début): {extrait_cle} ...")
+    print(f"Clé générée (début) : {extrait_cle} ...")
     print("-" * 50)
 
     # 3. Chiffrement
     message_chiffre = chiffrer(message_original, ma_cle)
-    print(f"Message chiffré  : '{message_chiffre}'")
+    print(f"Message chiffré : '{message_chiffre}'")
 
     # 4. Déchiffrement
     message_dechiffre = dechiffrer(message_chiffre, ma_cle)
-    print(f"Message déchiffré: '{message_dechiffre}'")
+    print(f"Message déchiffré : '{message_dechiffre}'")
     print("-" * 50)
 
     # 5. Vérification finale
     if message_original == message_dechiffre:
-        print("✅ Succès ! L'algorithme de substitution fonctionne parfaitement.")
+        print("Succès ! L'algorithme de substitution fonctionne parfaitement.")
     else:
-        print("❌ Erreur : Le texte déchiffré ne correspond pas à l'original.")
+        print("Erreur : Le texte déchiffré ne correspond pas à l'original.")
