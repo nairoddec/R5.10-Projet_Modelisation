@@ -51,6 +51,36 @@ def construire_matrice_transitions(statistiques: dict) -> tuple[np.ndarray, dict
     return matrice, char_to_idx, idx_to_char
 
 
+def afficher_matrice_transitions(
+    matrice: np.ndarray,
+    idx_to_char: dict,
+    seuil: float = 0.0,
+) -> None:
+    taille = matrice.shape[0]
+
+    colonnes_utilisees = [
+        j for j in range(taille) if matrice[:, j].sum() > seuil
+    ]
+    lignes_utilisees = [
+        i for i in range(taille) if matrice[i, :].sum() > seuil
+    ]
+
+    def etiquette(c: str) -> str:
+        return "␣" if c == " " else c
+
+    largeur = 6
+    entete = " " * largeur + "".join(
+        f"{etiquette(idx_to_char[j]):>{largeur}}" for j in colonnes_utilisees
+    )
+    print(entete)
+
+    for i in lignes_utilisees:
+        ligne = f"{etiquette(idx_to_char[i]):<{largeur}}"
+        for j in colonnes_utilisees:
+            valeur = matrice[i, j]
+            ligne += f"{valeur:>{largeur}.2f}" if valeur > 0 else f"{'.':>{largeur}}"
+        print(ligne)
+
 def generer_texte_markov(
     matrice: np.ndarray,
     char_to_idx: dict,
@@ -75,7 +105,7 @@ def generer_texte_markov(
 
 
 def main() -> None:
-    texte_brut = "Bonjour tout le monde, bonjour à tous les amis !"
+    texte_brut = "Bonjour tout le monde, outils de digrammes !"
     texte_analyse = normaliser_texte(texte_brut)
 
     print("\n--- Texte normalisé ---")
@@ -88,7 +118,7 @@ def main() -> None:
 
     print("\n--- Matrice de transitions ---")
     matrice_transitions, char2idx, idx2char = construire_matrice_transitions(resultats)
-    print(matrice_transitions)
+    afficher_matrice_transitions(matrice_transitions, idx2char)
 
     print("\n--- Génération de texte (Chaîne de Markov) ---")
     texte_simule = generer_texte_markov(matrice_transitions, char2idx, idx2char, longueur=60)
