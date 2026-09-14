@@ -50,16 +50,19 @@ def recuperer_texte_mediawiki(url):
 
 
 def est_caractere_analyse(caractere: str) -> bool:
-    categorie = unicodedata.category(caractere)
-    return caractere.isalpha() or caractere.isdigit() or categorie.startswith("M")
+    return caractere.isalpha()
+
 
 def nettoyer_texte(texte: str) -> str:
-    """Normalise le texte et garde lettres, chiffres et espaces Unicode."""
-    texte = unicodedata.normalize("NFC", texte.upper())
+    """Met en majuscules, retire les accents, chiffres et ponctuation."""
+    texte = unicodedata.normalize("NFD", texte.upper())
+
     texte = "".join(
         caractere if est_caractere_analyse(caractere) else " "
         for caractere in texte
+        if not unicodedata.combining(caractere)
     )
+
     return " ".join(texte.split())
 
 

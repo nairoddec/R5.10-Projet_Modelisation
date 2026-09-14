@@ -12,16 +12,19 @@ import numpy as np
 
 
 def est_caractere_analyse(caractere: str) -> bool:
-    categorie = unicodedata.category(caractere)
-    return caractere.isalpha() or caractere.isdigit() or categorie.startswith("M")
+    return caractere.isalpha()
 
 
 def normaliser_texte(texte: str) -> str:
-    texte = unicodedata.normalize("NFC", texte.upper())
+    # NFD sépare É en E + accent ; l'accent est ensuite supprimé.
+    texte = unicodedata.normalize("NFD", texte.upper())
+
     texte = "".join(
         caractere if est_caractere_analyse(caractere) else " "
         for caractere in texte
+        if not unicodedata.combining(caractere)
     )
+
     return " ".join(texte.split())
 
 
