@@ -1,69 +1,86 @@
-def verifier_cle_permutation(cle):
-    """
-    Vérifie que la clé est une liste contenant tous les entiers 
-    de 0 à (longueur_cle - 1) sans doublon.
-    """
+from analyse_frequentielle import recuperer_texte_mediawiki, nettoyer_texte
+from fonction_outils import recuperer_texte_mediawiki, nettoyer_texte
+
+def verifier_cle_permutation(cle: list[int]) -> bool:
+    """Vérifie que la clé contient chaque position une seule fois."""
     longueur = len(cle)
-    if set(cle) != set(range(longueur)):
-        raise ValueError(f"La clé n'est pas valide. Elle doit contenir tous les entiers de 0 à {longueur - 1}.")
+
+    if longueur == 0 or set(cle) != set(range(longueur)):
+        raise ValueError(
+            "La clé doit contenir tous les entiers de 0 à "
+            f"{longueur - 1}, sans doublon."
+        )
+
     return True
 
-def inverser_cle_permutation(cle):
-    """
-    Construit la clé inverse. Si l'indice 0 va à l'indice 3, 
-    la clé inverse fera en sorte que l'indice 3 retourne à l'indice 0.
-    """
-    longueur = len(cle)
-    cle_inverse = [0] * longueur
+
+def inverser_cle_permutation(cle: list[int]) -> list[int]:
+    """Construit la clé inverse."""
+    cle_inverse = [0] * len(cle)
+
     for position_initiale, nouvelle_position in enumerate(cle):
         cle_inverse[nouvelle_position] = position_initiale
+
     return cle_inverse
 
-def chiffrer_permutation(texte, cle):
-    """
-    Chiffre le texte en le découpant en blocs et en déplaçant les caractères.
-    """
+
+def chiffrer_permutation(texte: str, cle: list[int]) -> str:
+    """Chiffre le texte par permutation de blocs."""
     longueur = len(cle)
-    
-    # 1. Padding : On ajoute des espaces à la fin si le texte 
-    # n'est pas un multiple de la longueur de la clé.
-    espaces_manquants = (longueur - (len(texte) % longueur)) % longueur
+
+    espaces_manquants = (longueur - len(texte) % longueur) % longueur
     texte += " " * espaces_manquants
-    
+
     texte_chiffre = []
-    
-    # 2. Découpage et mélange par blocs
+
     for i in range(0, len(texte), longueur):
-        bloc = texte[i : i + longueur]
-        bloc_melange = [''] * longueur
-        
+        bloc = texte[i:i + longueur]
+        bloc_melange = [""] * longueur
+
         for position_initiale, nouvelle_position in enumerate(cle):
             bloc_melange[nouvelle_position] = bloc[position_initiale]
-            
+
         texte_chiffre.append("".join(bloc_melange))
-        
+
     return "".join(texte_chiffre)
 
-def dechiffrer_permutation(texte_chiffre, cle):
-    """
-    Déchiffre un texte chiffré par permutation en utilisant l'inverse de la clé.
-    """
+
+def dechiffrer_permutation(texte_chiffre: str, cle: list[int]) -> str:
+    """Déchiffre avec la permutation inverse."""
     cle_inverse = inverser_cle_permutation(cle)
-    # Déchiffrer revient exactement à chiffrer avec la clé inverse !
     return chiffrer_permutation(texte_chiffre, cle_inverse)
 
 
-# --- Test avec l'exemple du sujet ---
 if __name__ == "__main__":
-    message_clair = "BONJOUR"
-    cle_permutation = [3, 0, 2, 1] # Correspond à la clé 3021 du PDF
-    
+    url_cible = "https://fr.wikipedia.org/wiki/Château"
+    cle_permutation = [3, 0, 2, 1]
+
     verifier_cle_permutation(cle_permutation)
-    
+
+    try:
+        texte_brut = recuperer_texte_mediawiki(url_cible)
+    except Exception as erreur:
+        print(f"Impossible de récupérer la page Wikipédia : {erreur}")
+        raise SystemExit(1)
+
+    # Même règle que l'analyse fréquentielle :
+    # lettres seulement, majuscules, sans accents ni chiffres.
+    message_clair = nettoyer_texte(texte_brut)
+
     cryptogramme = chiffrer_permutation(message_clair, cle_permutation)
-    message_retrouve = dechiffrer_permutation(cryptogramme, cle_permutation)
-    
-    print(f"Message original : '{message_clair}'")
-    print(f"Clé utilisée     : {cle_permutation}")
-    print(f"Cryptogramme     : '{cryptogramme}'") # Doit afficher 'OJNBU RO'
-    print(f"Message décodé   : '{message_retrouve}'")
+    message_retrouve = dechiffrer_permutation(
+        cryptogramme,
+        cle_permutation,
+    ).rstrip()
+
+    print(f"URL utilisée : {url_cible}")
+    print(f"Clé utilisée : {cle_permutation}")
+    print(f"Longueur du message : {len(message_clair)}")
+
+    print(f"\nExtrait original : {message_clair[:300]}...")
+    print(f"\nExtrait chiffré : {cryptogramme[:300]}...")
+
+    if message_clair == message_retrouve:
+        print("\nSuccès : le texte déchiffré correspond au texte original.")
+    else:
+        print("\nErreur : le déchiffrement ne correspond pas.")

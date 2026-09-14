@@ -1,60 +1,74 @@
-import string
 import random
 
-# L'alphabet de référence
-ALPHABET = list(string.ascii_uppercase)
+from analyse_frequentielle import recuperer_texte_mediawiki, nettoyer_texte
+from fonction_outils import recuperer_texte_mediawiki, nettoyer_texte
 
-def generer_cle_aleatoire():
-    """Définit une clé de chiffrement (permutation aléatoire)."""
-    alphabet_melange = ALPHABET.copy()
+def extraire_alphabet(texte: str) -> list[str]:
+    """Liste les lettres réellement présentes dans le texte."""
+    return list(dict.fromkeys(caractere for caractere in texte if caractere != " "))
+
+
+def generer_cle_aleatoire(alphabet: list[str]) -> dict[str, str]:
+    """Crée une permutation aléatoire de l'alphabet détecté."""
+    alphabet_melange = alphabet.copy()
     random.shuffle(alphabet_melange)
-    return dict(zip(ALPHABET, alphabet_melange))
+    return dict(zip(alphabet, alphabet_melange))
 
-def verifier_cle(cle):
-    """Vérifie que la clé contient bien une permutation des 26 lettres."""
-    if set(cle.keys()) != set(ALPHABET) or set(cle.values()) != set(ALPHABET):
-         raise ValueError("La clé n'est pas une permutation valide de 26 lettres.")
+
+def verifier_cle(cle: dict[str, str], alphabet: list[str]) -> bool:
+    """Vérifie que la clé est une permutation de l'alphabet détecté."""
+    if set(cle.keys()) != set(alphabet) or set(cle.values()) != set(alphabet):
+        raise ValueError("La clé n'est pas une permutation valide de l'alphabet.")
     return True
 
-def inverser_cle(cle):
-    """Construit l'inverse de la clé de chiffrement."""
-    return {valeur: cle_origine for cle_origine, valeur in cle.items()}
 
-def chiffrer(texte_clair, cle):
-    """Applique la clé à un texte clair (conserve l'espace)."""
+def inverser_cle(cle: dict[str, str]) -> dict[str, str]:
+    """Construit l'inverse de la clé."""
+    return {valeur: origine for origine, valeur in cle.items()}
+
+
+def chiffrer(texte_clair: str, cle: dict[str, str]) -> str:
+    """Chiffre les lettres et conserve les espaces."""
     return "".join(cle.get(caractere, caractere) for caractere in texte_clair)
 
-def dechiffrer(texte_chiffre, cle):
-    """Déchiffre un texte avec une clé connue."""
-    cle_inverse = inverser_cle(cle)
-    return chiffrer(texte_chiffre, cle_inverse)
+
+def dechiffrer(texte_chiffre: str, cle: dict[str, str]) -> str:
+    """Déchiffre le texte avec la clé connue."""
+    return chiffrer(texte_chiffre, inverser_cle(cle))
 
 
 if __name__ == "__main__":
-    # 1. Le message clair (en majuscules, selon notre alphabet)
-    message_original = "ATTAQUE FREQUENTIELLE SUR WIKIPEDIA"
-    print(f"Message original : '{message_original}'")
-    print("-" * 50)
+    url_cible = "https://fr.wikipedia.org/wiki/Château"
 
-    # 2. Génération et vérification de la clé
-    ma_cle = generer_cle_aleatoire()
-    verifier_cle(ma_cle)
-    # Affiche un extrait de la clé (les 5 premières substitutions) pour vérifier
-    extrait_cle = {k: ma_cle[k] for k in list(ma_cle)[:5]}
-    print(f"Clé générée (début) : {extrait_cle} ...")
-    print("-" * 50)
+    try:
+        texte_brut = recuperer_texte_mediawiki(url_cible)
+    except Exception as erreur:
+        print(f"Impossible de récupérer la page : {erreur}")
+        raise SystemExit(1)
 
-    # 3. Chiffrement
+    # Même nettoyage que l'analyse fréquentielle :
+    # lettres uniquement, majuscules, sans accents ni chiffres.
+    message_original = nettoyer_texte(texte_brut)
+
+    if not message_original:
+        print("La page ne contient aucune lettre exploitable.")
+        raise SystemExit(1)
+
+    alphabet = extraire_alphabet(message_original)
+    ma_cle = generer_cle_aleatoire(alphabet)
+    verifier_cle(ma_cle, alphabet)
+
+    print(f"URL analysée : {url_cible}")
+    print(f"Alphabet détecté : {''.join(alphabet)}")
+    print(f"Longueur du message : {len(message_original)} caractères")
+
     message_chiffre = chiffrer(message_original, ma_cle)
-    print(f"Message chiffré : '{message_chiffre}'")
-
-    # 4. Déchiffrement
     message_dechiffre = dechiffrer(message_chiffre, ma_cle)
-    print(f"Message déchiffré : '{message_dechiffre}'")
-    print("-" * 50)
 
-    # 5. Vérification finale
+    print(f"\nExtrait original : {message_original[:300]}...")
+    print(f"\nExtrait chiffré : {message_chiffre[:300]}...")
+
     if message_original == message_dechiffre:
-        print("Succès ! L'algorithme de substitution fonctionne parfaitement.")
+        print("\nSuccès : le texte déchiffré est identique au texte original.")
     else:
-        print("Erreur : Le texte déchiffré ne correspond pas à l'original.")
+        print("\nErreur : le déchiffrement ne correspond pas au texte original.")

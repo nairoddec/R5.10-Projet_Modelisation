@@ -4,28 +4,14 @@ Analyse de digrammes et génération de texte par chaîne de Markov.
 
 from collections import Counter
 from analyse_frequentielle import recuperer_texte_mediawiki
+from fonction_outils import est_caractere_analyse, nettoyer_texte
+
 import unicodedata
 
 
 import numpy as np
 
 
-
-def est_caractere_analyse(caractere: str) -> bool:
-    return caractere.isalpha()
-
-
-def normaliser_texte(texte: str) -> str:
-    # NFD sépare É en E + accent ; l'accent est ensuite supprimé.
-    texte = unicodedata.normalize("NFD", texte.upper())
-
-    texte = "".join(
-        caractere if est_caractere_analyse(caractere) else " "
-        for caractere in texte
-        if not unicodedata.combining(caractere)
-    )
-
-    return " ".join(texte.split())
 
 
 def extraire_alphabet(texte: str) -> list[str]:
@@ -135,7 +121,7 @@ def main() -> None:
         print(f"Impossible de récupérer la page Wikipédia : {erreur}")
         return
 
-    texte_analyse = normaliser_texte(texte_brut)
+    texte_analyse = nettoyer_texte(texte_brut)
     alphabet = extraire_alphabet(texte_analyse)
 
     print("\n--- Texte normalisé ---")

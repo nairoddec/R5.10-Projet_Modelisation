@@ -38,15 +38,3 @@ def dechiffrement_vigenere(texte_chiffre, cle):
             index_cle += 1
             
     return resultat
-
-# --- Test ---
-message = "ATTAQUE A LAUBE"
-cle = "SECRET"
-
-chiffre = chiffrement_vigenere(message, cle)
-dechiffre = dechiffrement_vigenere(chiffre, cle)
-
-print(f"Message original : {message}")
-print(f"Mot-clé : {cle}\n")
-print(f"Message chiffré : {chiffre}")
-print(f"Message déchiffré : {dechiffre}")

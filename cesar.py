@@ -14,14 +14,3 @@ def dechiffrement_cesar(texte_chiffre, decalage):
     return chiffrement_cesar(texte_chiffre, -decalage)
 
 
-# --- Test ---
-message = "RENDEZ VOUS A MIDI SECRET"
-cle = 5
-
-chiffre = chiffrement_cesar(message, cle)
-dechiffre = dechiffrement_cesar(chiffre, cle)
-
-print(f"Message original : {message}")
-print(f"Clé de décalage : {cle}\n")
-print(f"Message chiffré : {chiffre}")
-print(f"Message déchiffré : {dechiffre}")

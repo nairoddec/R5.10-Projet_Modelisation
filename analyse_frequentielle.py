@@ -4,6 +4,7 @@ import unicodedata
 import urllib.request
 from urllib.parse import unquote, urlencode, urlsplit
 
+from fonction_outils import recuperer_texte_mediawiki, nettoyer_texte
 
 def extraire_titre_et_api(url):
     """Vérifie une URL MediaWiki et renvoie le titre et l'URL de son API."""
@@ -48,22 +49,6 @@ def recuperer_texte_mediawiki(url):
 
     return pages[0].get("extract", "")
 
-
-def est_caractere_analyse(caractere: str) -> bool:
-    return caractere.isalpha()
-
-
-def nettoyer_texte(texte: str) -> str:
-    """Met en majuscules, retire les accents, chiffres et ponctuation."""
-    texte = unicodedata.normalize("NFD", texte.upper())
-
-    texte = "".join(
-        caractere if est_caractere_analyse(caractere) else " "
-        for caractere in texte
-        if not unicodedata.combining(caractere)
-    )
-
-    return " ".join(texte.split())
 
 
 def calculer_statistiques(texte):
