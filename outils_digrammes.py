@@ -3,17 +3,31 @@ Analyse de digrammes et génération de texte par chaîne de Markov.
 """
 
 from collections import Counter
+from analyse_frequentielle import recuperer_texte_mediawiki
+import unicodedata
+
 
 import numpy as np
 
-ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZÀÂÄÉÈÊËÎÏÔÖÙÛÜÇ0123456789 .,;:!?'-\"()"
+
+
+def est_caractere_analyse(caractere: str) -> bool:
+    categorie = unicodedata.category(caractere)
+    return caractere.isalpha() or caractere.isdigit() or categorie.startswith("M")
 
 
 def normaliser_texte(texte: str) -> str:
-    texte = texte.upper()
-    texte = "".join(c for c in texte if c in ALPHABET)
-    texte = " ".join(texte.split())
-    return texte
+    texte = unicodedata.normalize("NFC", texte.upper())
+    texte = "".join(
+        caractere if est_caractere_analyse(caractere) else " "
+        for caractere in texte
+    )
+    return " ".join(texte.split())
+
+
+def extraire_alphabet(texte: str) -> list[str]:
+    """Construit l'alphabet depuis les caractères réellement présents."""
+    return list(dict.fromkeys(texte))
 
 
 def statistiques_digrammes(texte: str) -> dict:
@@ -32,15 +46,20 @@ def statistiques_digrammes(texte: str) -> dict:
     return statistiques
 
 
-def construire_matrice_transitions(statistiques: dict) -> tuple[np.ndarray, dict, dict]:
-    taille = len(ALPHABET)
-    char_to_idx = {c: i for i, c in enumerate(ALPHABET)}
-    idx_to_char = {i: c for i, c in enumerate(ALPHABET)}
+def construire_matrice_transitions(
+    statistiques: dict,
+    alphabet: list[str],
+) -> tuple[np.ndarray, dict, dict]:
+    taille = len(alphabet)
+    char_to_idx = {c: i for i, c in enumerate(alphabet)}
+    idx_to_char = {i: c for i, c in enumerate(alphabet)}
     matrice = np.zeros((taille, taille))
 
     for digramme, donnees in statistiques.items():
-        if len(digramme) == 2 and digramme[0] in char_to_idx and digramme[1] in char_to_idx:
-            matrice[char_to_idx[digramme[0]], char_to_idx[digramme[1]]] = donnees["occurrences"]
+        if len(digramme) == 2:
+            i = char_to_idx[digramme[0]]
+            j = char_to_idx[digramme[1]]
+            matrice[i, j] = donnees["occurrences"]
 
     sommes_lignes = matrice.sum(axis=1, keepdims=True)
     matrice = np.divide(
@@ -105,23 +124,45 @@ def generer_texte_markov(
 
 
 def main() -> None:
-    texte_brut = "Bonjour tout le monde, outils de digrammes !"
+    url_cible = "https://fr.wikipedia.org/wiki/Château"
+
+    try:
+        texte_brut = recuperer_texte_mediawiki(url_cible)
+    except Exception as erreur:
+        print(f"Impossible de récupérer la page Wikipédia : {erreur}")
+        return
+
     texte_analyse = normaliser_texte(texte_brut)
+    alphabet = extraire_alphabet(texte_analyse)
 
     print("\n--- Texte normalisé ---")
-    print(texte_analyse)
+    print(texte_analyse[:500] + "..." if len(texte_analyse) > 500 else texte_analyse)
+
+    print("\n--- Alphabet détecté ---")
+    print(alphabet)
 
     print("\n--- Statistiques des digrammes ---")
     resultats = statistiques_digrammes(texte_analyse)
     for digramme, donnees in resultats.items():
-        print(f"'{digramme}' : {donnees['occurrences']} fois ({donnees['pourcentage']} %)")
+        print(
+            f"'{digramme}' : {donnees['occurrences']} fois "
+            f"({donnees['pourcentage']} %)"
+        )
 
     print("\n--- Matrice de transitions ---")
-    matrice_transitions, char2idx, idx2char = construire_matrice_transitions(resultats)
+    matrice_transitions, char2idx, idx2char = construire_matrice_transitions(
+        resultats,
+        alphabet,
+    )
     afficher_matrice_transitions(matrice_transitions, idx2char)
 
     print("\n--- Génération de texte (Chaîne de Markov) ---")
-    texte_simule = generer_texte_markov(matrice_transitions, char2idx, idx2char, longueur=60)
+    texte_simule = generer_texte_markov(
+        matrice_transitions,
+        char2idx,
+        idx2char,
+        longueur=60,
+    )
     print(texte_simule)
 
 

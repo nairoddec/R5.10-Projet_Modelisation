@@ -49,14 +49,16 @@ def recuperer_texte_mediawiki(url):
     return pages[0].get("extract", "")
 
 
-def nettoyer_texte(texte):
-    """Met le texte en majuscules, enlève les accents et garde A-Z et espaces."""
-    texte = unicodedata.normalize("NFD", texte.upper())
+def est_caractere_analyse(caractere: str) -> bool:
+    categorie = unicodedata.category(caractere)
+    return caractere.isalpha() or caractere.isdigit() or categorie.startswith("M")
+
+def nettoyer_texte(texte: str) -> str:
+    """Normalise le texte et garde lettres, chiffres et espaces Unicode."""
+    texte = unicodedata.normalize("NFC", texte.upper())
     texte = "".join(
-        caractere
+        caractere if est_caractere_analyse(caractere) else " "
         for caractere in texte
-        if not unicodedata.combining(caractere)
-        and ("A" <= caractere <= "Z" or caractere.isspace())
     )
     return " ".join(texte.split())
 
@@ -103,5 +105,5 @@ def analyser_page_web(url, limite=27):
 
 
 if __name__ == "__main__":
-    url_cible = "https://fr.wikipedia.org/wiki/Cosplay"
+    url_cible = "https://fr.wikipedia.org/wiki/Château"
     analyser_page_web(url_cible)
