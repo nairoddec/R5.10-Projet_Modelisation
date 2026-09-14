@@ -1,11 +1,6 @@
 import math
 
-from analyse_frequentielle import recuperer_texte_mediawiki, nettoyer_texte
-from outils_digrammes import (
-    statistiques_digrammes,
-    construire_matrice_transitions,
-    extraire_alphabet,
-)
+from outils_digrammes import statistiques_digrammes,construire_matrice_transitions,extraire_alphabet
 from fonction_outils import recuperer_texte_mediawiki, nettoyer_texte
 
 

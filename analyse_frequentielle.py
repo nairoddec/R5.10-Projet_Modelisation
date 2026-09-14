@@ -23,34 +23,6 @@ def extraire_titre_et_api(url):
     return titre, api_url
 
 
-def recuperer_texte_mediawiki(url):
-    """Récupère le texte brut d'une page MediaWiki grâce à son API."""
-    titre, api_url = extraire_titre_et_api(url)
-    parametres = {
-        "action": "query",
-        "prop": "extracts",
-        "explaintext": "1",
-        "redirects": "1",
-        "titles": titre,
-        "format": "json",
-        "formatversion": "2",
-    }
-    requete = urllib.request.Request(
-        f"{api_url}?{urlencode(parametres)}",
-        headers={"User-Agent": "AnalyseurTexte/1.0"},
-    )
-
-    with urllib.request.urlopen(requete, timeout=15) as reponse:
-        donnees = json.load(reponse)
-
-    pages = donnees.get("query", {}).get("pages", [])
-    if not pages or "missing" in pages[0]:
-        raise ValueError(f"Page MediaWiki introuvable : {titre}")
-
-    return pages[0].get("extract", "")
-
-
-
 def calculer_statistiques(texte):
     """Renvoie les nombres de caractères et leurs fréquences."""
     return {

@@ -1,6 +1,6 @@
 import random
 
-from analyse_frequentielle import recuperer_texte_mediawiki, nettoyer_texte
+
 from fonction_outils import recuperer_texte_mediawiki, nettoyer_texte
 
 def extraire_alphabet(texte: str) -> list[str]:

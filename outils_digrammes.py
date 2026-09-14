@@ -3,8 +3,7 @@ Analyse de digrammes et génération de texte par chaîne de Markov.
 """
 
 from collections import Counter
-from analyse_frequentielle import recuperer_texte_mediawiki
-from fonction_outils import est_caractere_analyse, nettoyer_texte
+from fonction_outils import recuperer_texte_mediawiki, nettoyer_texte
 
 import unicodedata
 

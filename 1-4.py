@@ -1,4 +1,3 @@
-from analyse_frequentielle import recuperer_texte_mediawiki, nettoyer_texte
 from fonction_outils import recuperer_texte_mediawiki, nettoyer_texte
 
 def verifier_cle_permutation(cle: list[int]) -> bool:
