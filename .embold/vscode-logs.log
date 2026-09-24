@@ -1,0 +1,32 @@
+2026-09-24 11:16:01 info: Congratulations, your extension "Embold" is now active!
+2026-09-24 11:16:01 info: ************* init ****************
+2026-09-24 11:16:01 info: tempDirectory : /Users/ddeci/.vscode/extensions/embold-vscode.embold-0.3.8/temp
+2026-09-24 11:16:03 error: SQLITE_ERROR: no such table: issues
+2026-09-24 11:16:03 info: Extraction complete for source: /Users/ddeci/.vscode/extensions/embold-vscode.embold-0.3.8/resources/embold-scanner-archive.zip, destination: /Users/ddeci/.vscode/extensions/embold-vscode.embold-0.3.8/temp
+2026-09-24 11:16:03 info: Extension installed on machine OS : darwin
+2026-09-24 11:16:03 info: Loading issues from local database on startup (checkbox unchecked)
+2026-09-24 11:16:03 info: Using emboldDBDir: /Users/ddeci/Documents/BUT3/SEMESTRE_5/R5.12-Modelisations/Projet/R5.10-Projet_Modelisation/.embold
+2026-09-24 11:16:03 info: NO_PROXY set from VS Code http.noProxy: 
+2026-09-24 11:16:03 info: NODE_TLS_REJECT_UNAUTHORIZED not set (SSL verification enabled)
+2026-09-24 11:16:03 info: Using system certificates for SSL verification
+2026-09-24 11:16:03 info: [STARTUP] Processing 0 total issues from database
+2026-09-24 11:16:03 info: [STARTUP] Issues sorted by file path
+2026-09-24 11:16:03 info: [STARTUP] Complete - Processed: 0, Skipped: 0
+2026-09-24 11:16:03 info: Fetched the issues from DB
+2026-09-24 11:16:03 info: Java version installed on machine : 
+openjdk version "25.0.2" 2026-01-20
+OpenJDK Runtime Environment Homebrew (build 25.0.2)
+OpenJDK 64-Bit Server VM Homebrew (build 25.0.2, mixed mode, sharing)
+
+2026-09-24 11:16:03 info: Java installed on machine.
+2026-09-24 11:16:03 info: Embold extension version response:{"hasSupport":false,"version":"0.2.1","changeNotes":"<div> <p>Release Date: 30 Apr, 2025 <br><span>Bug fixes and improvements.</span></p> </div>"}
+2026-09-24 11:16:03 info: Current installed embold extension version : 0.3.8
+2026-09-24 11:16:03 info: Latest embold extension version on marketplace : 0.2.1
+2026-09-24 11:16:03 info: Current extension version: 0.3.8
+2026-09-24 11:16:03 info: Stored extension version: 0.3.8
+2026-09-24 11:16:03 info: No new installation or upgrade detected. Skipping plugin activation tracking.
+2026-09-24 11:18:31 info: Row(s) deleted
+2026-09-24 11:31:52 info: Row(s) deleted
+2026-09-24 11:31:52 info: Row(s) deleted
+2026-09-24 11:32:06 info: Row(s) deleted
+2026-09-24 11:32:06 info: Row(s) deleted
