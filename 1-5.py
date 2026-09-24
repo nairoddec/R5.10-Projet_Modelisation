@@ -15,10 +15,10 @@ def calculer_score_log(texte, stats_reference):
     score = 0.0
     
     for i in range(len(texte) - 1):
-        xy = texte[i:i+2] # Récupère le bigramme (ex: "ES")
+        xy = texte[i:i+2] # Récupère le digramme (ex: "ES")
         
         # On va chercher le nombre d'occurrences de "xy" dans le vrai français.
-        # .get(xy, {}) renvoie un dico vide si le bigramme n'existe pas du tout.
+        # .get(xy, {}) renvoie un dico vide si le digramme n'existe pas du tout.
         occurrences = stats_reference.get(xy, {}).get("occurrences", 0)
         
         # Formule du sujet : r(x,y) = 1 + occurrences

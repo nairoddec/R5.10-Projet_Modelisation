@@ -22,3 +22,24 @@ Pour attaquer un chiffrement par substitution classique, on exploite le fait que
 Le chiffrement par permutation de positions est plus difficile à attaquer qu'une substitution classique car il ne modifie aucune lettre du texte clair, mais se contente de les déplacer. Par conséquent, une attaque fréquentielle basique (qui compte simplement les occurrences de chaque caractère individuel) est totalement inefficace, puisque le cryptogramme conserve exactement les mêmes proportions de lettres que la langue d'origine. 
 De plus, pour casser ce chiffrement de manière brute, un attaquant fait face à une double inconnue : il doit deviner non seulement l'ordre exact de la permutation, mais aussi la longueur fixe du bloc qui sert de clé. En éparpillant les caractères, ce procédé détruit la structure locale du texte en cassant les digrammes réguliers (les syllabes et les mots naturels), ce qui justifie précisément l'utilisation d'une méthode probabiliste avancée comme l'algorithme MCMC pour espérer reconstituer le message en évaluant la crédibilité des paires de lettres.
 
+
+
+# 1.5.1 : Pourquoi peut-on interpréter cela comme une crédibilité pour la clé-hypothèse k ?
+
+La formule du score S(k)=∏(x,y) r(x,y)^fk(x,y) quantifie directement la ressemblance structurelle entre le texte déchiffré et le français naturel.   
+
+Si la clé-hypothèse k est pertinente, le texte déchiffré contiendra de nombreuses paires de lettres très courantes en français (comme "ES", "LE", "EN"). Pour ces paires, la fréquence de référence r(x,y) est élevée. En l'élevant à la puissance de ses occurrences dans le texte déchiffré fk(x,y), le score global est multiplié par un nombre immense.   
+
+À l'inverse, une mauvaise clé génère des paires improbables (comme "WZ" ou "QK"). Pour ces bigrammes, la valeur r(x,y) sera très faible (proche de 1), ce qui n'augmentera presque pas le score final.   
+Le score est donc une mesure directe de "crédibilité" : plus il est élevé, plus le texte généré par la clé respecte les lois statistiques de la langue de référence.
+
+
+
+
+# 1.5.2 : Pourquoi cette chaîne de Markov est-elle irréductible et apériodique ?
+
+
+Ces deux propriétés mathématiques sont garanties par les mécanismes mêmes de la boucle MCMC :
+Irréductibilité : Une chaîne de Markov est irréductible s'il est possible de transiter de n'importe quel état vers n'importe quel autre état en un nombre fini d'étapes. Ici, les états sont les différentes clés. L'algorithme mute par transposition (échange de deux éléments pris au hasard). Puisqu'en algèbre toute permutation peut être décomposée en un produit de transpositions, une suite finie d'échanges permet nécessairement de relier n'importe quelle clé de départ à n'importe quelle autre clé d'arrivée.   
+
+Apériodicité : Une chaîne est apériodique si la séquence de ses états ne s'enferme pas dans des cycles répétitifs de longueur fixe. Dans cet algorithme, la règle de sélection indique qu'en cas de refus (si le tirage U n'est pas inférieur au ratio des scores), la séquence reste dans l'état actuel k. Cette probabilité stricte d'effectuer une transition d'un état vers lui-même (une boucle locale) casse instantanément toute périodicité
