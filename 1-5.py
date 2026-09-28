@@ -8,23 +8,22 @@ from permutation import dechiffrer_permutation, chiffrer_permutation
 # On importe la fonction de ton exercice 1.2
 from outils_digrammes import statistiques_digrammes 
 
-def calculer_score_log(texte, stats_reference):
+def calculer_score_log(texte_dechiffre, stats_reference):
     """
-    Calcule le score de crédibilité d'un texte déchiffré en utilisant les logarithmes.
+    Calcule le score S(k) en utilisant les logarithmes et la fonction d'analyse de digrammes.
     """
     score = 0.0
-    
-    for i in range(len(texte) - 1):
-        xy = texte[i:i+2] # Récupère le digramme (ex: "ES")
-        
-        # On va chercher le nombre d'occurrences de "xy" dans le vrai français.
-        # .get(xy, {}) renvoie un dico vide si le digramme n'existe pas du tout.
-        occurrences = stats_reference.get(xy, {}).get("occurrences", 0)
-        
-        # Formule du sujet : r(x,y) = 1 + occurrences
-        r_xy = 1 + occurrences
-        
-        score += math.log(r_xy)
+    # 1. On extrait les occurrences f_k(x,y) du texte qu'on vient de déchiffrer
+    stats_texte_actuel = statistiques_digrammes(texte_dechiffre)
+    # 2. On applique la formule sur chaque digramme trouvé
+    for digramme, donnees in stats_texte_actuel.items():
+        # f_k(x,y) : le nombre de fois où le digramme apparaît dans notre texte
+        f_k = donnees["occurrences"]
+        # r(x,y) = 1 + occurrences de ce même digramme dans le français de référence
+        occurrences_ref = stats_reference.get(digramme, {}).get("occurrences", 0)
+        r_xy = 1 + occurrences_ref
+        # Formule mathématique avec les logarithmes : f_k * log(r_xy)
+        score += f_k * math.log(r_xy)
         
     return score
 

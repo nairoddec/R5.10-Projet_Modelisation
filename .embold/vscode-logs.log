@@ -46,3 +46,78 @@ OpenJDK 64-Bit Server VM Homebrew (build 25.0.2, mixed mode, sharing)
 2026-09-24 11:55:24 info: Row(s) deleted
 2026-09-24 11:58:45 info: Row(s) deleted
 2026-09-24 12:01:46 info: Row(s) deleted
+2026-09-24 12:03:40 info: Row(s) deleted
+2026-09-24 12:03:54 info: Row(s) deleted
+2026-09-24 12:03:54 info: Row(s) deleted
+2026-09-24 12:03:54 info: Row(s) deleted
+2026-09-24 12:03:54 info: Row(s) deleted
+2026-09-24 12:03:54 info: Row(s) deleted
+2026-09-24 12:03:54 info: Row(s) deleted
+2026-09-24 12:03:58 info: Row(s) deleted
+2026-09-24 12:04:00 info: Row(s) deleted
+2026-09-24 12:04:46 info: Row(s) deleted
+2026-09-24 12:06:24 info: Row(s) deleted
+2026-09-24 12:07:47 info: Row(s) deleted
+2026-09-24 12:10:48 info: Row(s) deleted
+2026-09-24 12:13:48 info: Row(s) deleted
+2026-09-24 12:26:35 info: Row(s) deleted
+2026-09-24 12:40:50 info: Row(s) deleted
+2026-09-24 12:44:59 info: Congratulations, your extension "Embold" is now active!
+2026-09-24 12:44:59 info: ************* init ****************
+2026-09-24 12:44:59 info: tempDirectory : /Users/ddeci/.vscode/extensions/embold-vscode.embold-0.3.8/temp
+2026-09-24 12:45:00 info: Extraction complete for source: /Users/ddeci/.vscode/extensions/embold-vscode.embold-0.3.8/resources/embold-scanner-archive.zip, destination: /Users/ddeci/.vscode/extensions/embold-vscode.embold-0.3.8/temp
+2026-09-24 12:45:00 info: Extension installed on machine OS : darwin
+2026-09-24 12:45:00 info: Loading issues from local database on startup (checkbox unchecked)
+2026-09-24 12:45:00 info: Using emboldDBDir: /Users/ddeci/Documents/BUT3/SEMESTRE_5/R5.12-Modelisations/Projet/R5.10-Projet_Modelisation/.embold
+2026-09-24 12:45:00 info: NO_PROXY set from VS Code http.noProxy: 
+2026-09-24 12:45:00 info: NODE_TLS_REJECT_UNAUTHORIZED not set (SSL verification enabled)
+2026-09-24 12:45:00 info: Using system certificates for SSL verification
+2026-09-24 12:45:01 info: [STARTUP] Processing 0 total issues from database
+2026-09-24 12:45:01 info: [STARTUP] Issues sorted by file path
+2026-09-24 12:45:01 info: [STARTUP] Complete - Processed: 0, Skipped: 0
+2026-09-24 12:45:01 info: Fetched the issues from DB
+2026-09-24 12:45:01 info: Embold extension version response:{"hasSupport":false,"version":"0.2.1","changeNotes":"<div> <p>Release Date: 30 Apr, 2025 <br><span>Bug fixes and improvements.</span></p> </div>"}
+2026-09-24 12:45:01 info: Current installed embold extension version : 0.3.8
+2026-09-24 12:45:01 info: Latest embold extension version on marketplace : 0.2.1
+2026-09-24 12:45:01 info: Current extension version: 0.3.8
+2026-09-24 12:45:01 info: Stored extension version: 0.3.8
+2026-09-24 12:45:01 info: No new installation or upgrade detected. Skipping plugin activation tracking.
+2026-09-24 12:45:01 info: Java version installed on machine : 
+openjdk version "25.0.2" 2026-01-20
+OpenJDK Runtime Environment Homebrew (build 25.0.2)
+OpenJDK 64-Bit Server VM Homebrew (build 25.0.2, mixed mode, sharing)
+
+2026-09-24 12:45:01 info: Java installed on machine.
+2026-09-24 12:47:28 info: Row(s) deleted
+2026-09-28 16:20:38 info: Congratulations, your extension "Embold" is now active!
+2026-09-28 16:20:38 info: ************* init ****************
+2026-09-28 16:20:38 info: tempDirectory : /Users/ddeci/.vscode/extensions/embold-vscode.embold-0.3.8/temp
+2026-09-28 16:20:39 info: Extraction complete for source: /Users/ddeci/.vscode/extensions/embold-vscode.embold-0.3.8/resources/embold-scanner-archive.zip, destination: /Users/ddeci/.vscode/extensions/embold-vscode.embold-0.3.8/temp
+2026-09-28 16:20:39 info: Extension installed on machine OS : darwin
+2026-09-28 16:20:39 info: Loading issues from local database on startup (checkbox unchecked)
+2026-09-28 16:20:39 info: Using emboldDBDir: /Users/ddeci/Documents/BUT3/SEMESTRE_5/R5.12-Modelisations/Projet/R5.10-Projet_Modelisation/.embold
+2026-09-28 16:20:39 info: NO_PROXY set from VS Code http.noProxy: 
+2026-09-28 16:20:39 info: NODE_TLS_REJECT_UNAUTHORIZED not set (SSL verification enabled)
+2026-09-28 16:20:39 info: Using system certificates for SSL verification
+2026-09-28 16:20:39 info: [STARTUP] Processing 0 total issues from database
+2026-09-28 16:20:39 info: [STARTUP] Issues sorted by file path
+2026-09-28 16:20:39 info: [STARTUP] Complete - Processed: 0, Skipped: 0
+2026-09-28 16:20:39 info: Fetched the issues from DB
+2026-09-28 16:20:39 info: Java version installed on machine : 
+openjdk version "25.0.2" 2026-01-20
+OpenJDK Runtime Environment Homebrew (build 25.0.2)
+OpenJDK 64-Bit Server VM Homebrew (build 25.0.2, mixed mode, sharing)
+
+2026-09-28 16:20:39 info: Java installed on machine.
+2026-09-28 16:20:39 info: Embold extension version response:{"hasSupport":false,"version":"0.2.1","changeNotes":"<div> <p>Release Date: 30 Apr, 2025 <br><span>Bug fixes and improvements.</span></p> </div>"}
+2026-09-28 16:20:39 info: Current installed embold extension version : 0.3.8
+2026-09-28 16:20:39 info: Latest embold extension version on marketplace : 0.2.1
+2026-09-28 16:20:39 info: Current extension version: 0.3.8
+2026-09-28 16:20:39 info: Stored extension version: 0.3.8
+2026-09-28 16:20:39 info: No new installation or upgrade detected. Skipping plugin activation tracking.
+2026-09-28 16:20:39 info: Row(s) deleted
+2026-09-28 16:20:53 info: Row(s) deleted
+2026-09-28 16:20:56 info: Row(s) deleted
+2026-09-28 16:23:07 info: Row(s) deleted
+2026-09-28 16:23:26 info: Row(s) deleted
+2026-09-28 16:23:49 info: Row(s) deleted
