@@ -143,57 +143,73 @@ def attaque_mcmc_permutation(cryptogramme, stats_reference, longueur_cle, iterat
 
 
 if __name__ == "__main__":
-    # --- 1. PRÉPARATION COMMUNE ---
-    print("Récupération de la page Wikipédia de référence...")
+    # --- 1. PRÉPARATION COMMUNE (Statistiques de référence) ---
+    print("Récupération de la page Wikipédia de référence pour les statistiques (français)...")
     texte_brut_ref = recuperer_texte_mediawiki("https://fr.wikipedia.org/wiki/Château")
-    texte_ref = nettoyer_texte(texte_brut_ref)
+    stats_digrammes_ref = statistiques_digrammes(nettoyer_texte(texte_brut_ref))
     
-    print("Calcul des statistiques des digrammes...")
-    stats_digrammes_ref = statistiques_digrammes(texte_ref)
-    
-    # --- 2. TEST : ATTAQUE PAR SUBSTITUTION ---
+    # --- 2. SAISIE UTILISATEUR ---
     print("\n" + "="*50)
-    print("   TEST 1 : ATTAQUE MCMC PAR SUBSTITUTION")
+    print("   SAISIE DU TEXTE À DÉCHIFFRER")
     print("="*50)
     
-    # On utilise un vrai morceau de texte long (400 caractères) pour que les probabilités fonctionnent
-    message_secret_sub = texte_ref[:400] 
+    choix = input("Voulez-vous fournir une URL Wikipédia (1) ou taper/coller le texte directement (2) ? [1/2] : ").strip()
     
-    alphabet_test = extraire_alphabet(message_secret_sub)
-    cle_secrete_sub = generer_cle_aleatoire(alphabet_test)
-    cryptogramme_sub = chiffrer(message_secret_sub, cle_secrete_sub)
+    if choix == "1":
+        url_user = input("Entrez l'URL (ex: https://fr.wikipedia.org/wiki/Cryptographie) : ").strip()
+        texte_brut_user = recuperer_texte_mediawiki(url_user)
+    else:
+        texte_brut_user = input("Collez ou tapez votre texte ici : ").strip()
+        
+    # Conversion en texte brut (27 caractères : majuscules, espaces, sans accents)
+    texte_propre_user = nettoyer_texte(texte_brut_user)
     
-    print(f"Cryptogramme à casser (extrait de 400 caractères) :\n{cryptogramme_sub[:100]}...\n")
+    if len(texte_propre_user) < 300:
+        print("\n[Attention] Votre texte fait moins de 300 caractères. L'attaque MCMC risque de manquer de données statistiques pour converger parfaitement.")
+        
+    est_deja_chiffre = input("\nCe texte est-il DÉJÀ chiffré (cryptogramme) ? (o/n) : ").strip().lower()
+
+    # On limite la longueur à ~800 caractères max pour que le calcul reste rapide (et suffisant)
+    texte_cible = texte_propre_user[:800]
     
-    # On monte un peu les itérations car le texte est plus long et l'espace des clés est immense
-    famille_solutions_sub = attaque_mcmc_substitution(cryptogramme_sub, stats_digrammes_ref, iterations=25000, top_n=5)
+    # --- 3. PRÉPARATION DES CRYPTOGRAMMES ---
+    if est_deja_chiffre == 'n':
+        print("\n[Simulation] Chiffrement secret du texte en cours pour le test...")
+        # Substitution
+        alphabet_test = extraire_alphabet(texte_cible)
+        cle_sec_sub = generer_cle_aleatoire(alphabet_test)
+        crypto_sub = chiffrer(texte_cible, cle_sec_sub)
+        
+        # Permutation (longueur 4 fixée pour la simulation)
+        longueur_perm = 4
+        cle_sec_perm = list(range(longueur_perm))
+        random.shuffle(cle_sec_perm)
+        crypto_perm = chiffrer_permutation(texte_cible, cle_sec_perm)
+    else:
+        crypto_sub = texte_cible
+        longueur_perm = int(input("Pour l'attaque par permutation, quelle longueur de clé tester ? (ex: 4) : ").strip())
+        
+        # Si le cryptogramme n'est pas un multiple exact de la longueur, on le tronque proprement 
+        # pour éviter l'erreur de padding lors du déchiffrement par bloc
+        reste = len(texte_cible) % longueur_perm
+        crypto_perm = texte_cible if reste == 0 else texte_cible[:-reste]
+
+
+    # --- 4. EXÉCUTION DES ATTAQUES ---
+    print("\n" + "="*50)
+    print("   LANCEMENT DES ATTAQUES MCMC")
+    print("="*50)
     
-    print("\n--- RÉSULTAT FINAL SUBSTITUTION (Famille de clés) ---")
+    print(f"\n[SUBSTITUTION] Cryptogramme analysé (extrait) :\n{crypto_sub[:100]}...\n")
+    famille_solutions_sub = attaque_mcmc_substitution(crypto_sub, stats_digrammes_ref, iterations=25000, top_n=5)
+    
+    print("\n--- RÉSULTAT SUBSTITUTION ---")
     for rang, (score, cle, texte) in enumerate(famille_solutions_sub, 1):
-        print(f"\n[Solution #{rang}] Score : {score:.2f}")
-        print(f"Texte déchiffré (extrait) : {texte[:150]}...")
+        print(f"[Solution #{rang}] Score: {score:.2f} | Extrait: {texte[:120]}...")
 
-
-    # --- 3. TEST : ATTAQUE PAR PERMUTATION ---
-    print("\n\n" + "="*50)
-    print("   TEST 2 : ATTAQUE MCMC PAR PERMUTATION")
-    print("="*50)
+    print(f"\n\n[PERMUTATION] Cryptogramme analysé (extrait) :\n{crypto_perm[:100]}...\n")
+    famille_solutions_perm = attaque_mcmc_permutation(crypto_perm, stats_digrammes_ref, longueur_cle=longueur_perm, iterations=15000, top_n=5)
     
-    # On prend un autre morceau du texte pour la permutation
-    message_secret_perm = texte_ref[400:800]
-    
-    longueur_l = 4
-    cle_secrete_perm = list(range(longueur_l))
-    random.shuffle(cle_secrete_perm) 
-    
-    cryptogramme_perm = chiffrer_permutation(message_secret_perm, cle_secrete_perm)
-    
-    print(f"Clé secrète utilisée : {cle_secrete_perm}")
-    print(f"Cryptogramme à casser :\n{cryptogramme_perm[:100]}...\n")
-    
-    famille_solutions_perm = attaque_mcmc_permutation(cryptogramme_perm, stats_digrammes_ref, longueur_cle=longueur_l, iterations=15000, top_n=5)
-    
-    print("\n--- RÉSULTAT FINAL PERMUTATION (Famille de clés) ---")
+    print("\n--- RÉSULTAT PERMUTATION ---")
     for rang, (score, cle, texte) in enumerate(famille_solutions_perm, 1):
-        print(f"\n[Solution #{rang}] Score : {score:.2f} | Clé : {cle}")
-        print(f"Texte déchiffré (extrait) : {texte[:150]}...")
+        print(f"[Solution #{rang}] Score: {score:.2f} | Clé: {cle} | Extrait: {texte[:100]}...")
