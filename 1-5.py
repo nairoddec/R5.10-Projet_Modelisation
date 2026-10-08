@@ -13,16 +13,11 @@ def calculer_score_log(texte_dechiffre, stats_reference):
     Calcule le score S(k) en utilisant les logarithmes et la fonction d'analyse de digrammes.
     """
     score = 0.0
-    # 1. On extrait les occurrences f_k(x,y) du texte qu'on vient de déchiffrer
     stats_texte_actuel = statistiques_digrammes(texte_dechiffre)
-    # 2. On applique la formule sur chaque digramme trouvé
     for digramme, donnees in stats_texte_actuel.items():
-        # f_k(x,y) : le nombre de fois où le digramme apparaît dans notre texte
         f_k = donnees["occurrences"]
-        # r(x,y) = 1 + occurrences de ce même digramme dans le français de référence
         occurrences_ref = stats_reference.get(digramme, {}).get("occurrences", 0)
         r_xy = 1 + occurrences_ref
-        # Formule mathématique avec les logarithmes : f_k * log(r_xy)
         score += f_k * math.log(r_xy)
         
     return score
@@ -34,106 +29,92 @@ def muter_substitution(cle_actuelle):
     nouvelle_cle = cle_actuelle.copy()
     lettres_claires = list(nouvelle_cle.keys())
     
-    # Pioche deux lettres au hasard
     l1, l2 = random.sample(lettres_claires, 2)
-    
-    # Échange (transposition)
     nouvelle_cle[l1], nouvelle_cle[l2] = nouvelle_cle[l2], nouvelle_cle[l1]
     
     return nouvelle_cle
 
-def attaque_mcmc_substitution(cryptogramme, stats_reference, iterations=15000):
+def attaque_mcmc_substitution(cryptogramme, stats_reference, iterations=15000, top_n=5):
     """
-    Boucle principale de la chaîne de Markov Monte-Carlo.
+    Boucle principale MCMC. Renvoie les 'top_n' meilleures solutions trouvées.
     """
     alphabet = extraire_alphabet(cryptogramme)
     
-    # 1. État initial k
     cle_actuelle = generer_cle_aleatoire(alphabet)
     score_actuel = calculer_score_log(dechiffrer(cryptogramme, cle_actuelle), stats_reference)
     
-    meilleure_cle = cle_actuelle
-    meilleur_score = score_actuel
+    # Liste pour stocker les N meilleures solutions sous forme (score, cle, texte, identifiant_cle)
+    top_solutions = [(score_actuel, cle_actuelle.copy(), dechiffrer(cryptogramme, cle_actuelle), str(cle_actuelle))]
     
-    print("\nLancement de l'attaque MCMC (Patientez quelques secondes)...\n")
+    print(f"\nLancement de l'attaque MCMC (Recherche des {top_n} meilleures solutions)...\n")
     
-    # 2. Boucle de transitions
     for i in range(iterations):
-        # A. Mutation (état k')
         cle_proposee = muter_substitution(cle_actuelle)
-        
-        # B. Évaluation
         texte_propose = dechiffrer(cryptogramme, cle_proposee)
         score_propose = calculer_score_log(texte_propose, stats_reference)
         
-        # C. Règle de sélection
         diff_score = score_propose - score_actuel
         
         if diff_score > 0:
             accepter = True
         else:
-            # Si le score est moins bon, on l'accepte avec une probabilité mathématique
             U = random.uniform(0, 1)
             accepter = U < math.exp(diff_score)
             
-        # D. Transition
         if accepter:
             cle_actuelle = cle_proposee
             score_actuel = score_propose
             
-            # Sauvegarde absolue
-            if score_actuel > meilleur_score:
-                meilleur_score = score_actuel
-                meilleure_cle = cle_actuelle.copy()
+            # Gestion du Top N des solutions uniques
+            cle_str = str(cle_actuelle)
+            # On vérifie si cette clé n'est pas déjà dans notre top
+            if not any(c_str == cle_str for _, _, _, c_str in top_solutions):
+                top_solutions.append((score_actuel, cle_actuelle.copy(), texte_propose, cle_str))
+                # Tri par score décroissant
+                top_solutions.sort(key=lambda x: x[0], reverse=True)
+                # On ne garde que les N meilleures
+                top_solutions = top_solutions[:top_n]
                 
-        # Affichage régulier
         if i % 1000 == 0:
-            texte_apercu = dechiffrer(cryptogramme, meilleure_cle)[:50]
-            print(f"Itération {i:5d} | Score : {meilleur_score:8.2f} | {texte_apercu}...")
+            # On affiche la meilleure solution du moment
+            meilleur_score = top_solutions[0][0]
+            texte_apercu = top_solutions[0][2][:50]
+            print(f"Itération {i:5d} | Meilleur Score : {meilleur_score:8.2f} | {texte_apercu}...")
             
-    return meilleure_cle, dechiffrer(cryptogramme, meilleure_cle)
+    # On renvoie la liste complète des tuples (score, cle, texte)
+    return [(score, cle, texte) for score, cle, texte, _ in top_solutions]
 
 
 def muter_permutation(cle_actuelle):
     """
-    Crée un état voisin en déplaçant un sous-bloc (ici, échange de 2 positions).
+    Crée un état voisin en déplaçant un sous-bloc (échange de 2 positions).
     """
     nouvelle_cle = cle_actuelle.copy()
     longueur = len(nouvelle_cle)
     
-    # Pioche deux indices au hasard
     i, j = random.sample(range(longueur), 2)
-    
-    # Échange les valeurs à ces indices
     nouvelle_cle[i], nouvelle_cle[j] = nouvelle_cle[j], nouvelle_cle[i]
     
     return nouvelle_cle
 
-def attaque_mcmc_permutation(cryptogramme, stats_reference, longueur_cle, iterations=15000):
+def attaque_mcmc_permutation(cryptogramme, stats_reference, longueur_cle, iterations=15000, top_n=5):
     """
-    Boucle principale MCMC adaptée à la permutation pour une longueur l fixée.
+    Boucle principale MCMC pour la permutation. Renvoie les 'top_n' meilleures solutions.
     """
-    # 1. État initial k (une liste de 0 à l-1, mélangée)
     cle_actuelle = list(range(longueur_cle))
     random.shuffle(cle_actuelle)
     
     score_actuel = calculer_score_log(dechiffrer_permutation(cryptogramme, cle_actuelle), stats_reference)
     
-    meilleure_cle = cle_actuelle.copy()
-    meilleur_score = score_actuel
+    top_solutions = [(score_actuel, cle_actuelle.copy(), dechiffrer_permutation(cryptogramme, cle_actuelle), str(cle_actuelle))]
     
     print(f"\nLancement de l'attaque MCMC pour une permutation de longueur {longueur_cle}...")
     
-    # 2. Boucle de transitions
     for i in range(iterations):
-        # A. Mutation
         cle_proposee = muter_permutation(cle_actuelle)
-        
-        # B. Évaluation
         texte_propose = dechiffrer_permutation(cryptogramme, cle_proposee)
         score_propose = calculer_score_log(texte_propose, stats_reference)
         
-        # C. Sélection
         diff_score = score_propose - score_actuel
         
         if diff_score > 0:
@@ -142,26 +123,23 @@ def attaque_mcmc_permutation(cryptogramme, stats_reference, longueur_cle, iterat
             U = random.uniform(0, 1)
             accepter = U < math.exp(diff_score)
             
-        # D. Transition
         if accepter:
             cle_actuelle = cle_proposee
             score_actuel = score_propose
             
-            # Sauvegarde absolue
-            if score_actuel > meilleur_score:
-                meilleur_score = score_actuel
-                meilleure_cle = cle_actuelle.copy()
+            cle_str = str(cle_actuelle)
+            if not any(c_str == cle_str for _, _, _, c_str in top_solutions):
+                top_solutions.append((score_actuel, cle_actuelle.copy(), texte_propose, cle_str))
+                top_solutions.sort(key=lambda x: x[0], reverse=True)
+                top_solutions = top_solutions[:top_n]
                 
-        # Affichage
         if i % 1000 == 0:
-            texte_apercu = dechiffrer_permutation(cryptogramme, meilleure_cle)[:50]
-            print(f"Itération {i:5d} | Score : {meilleur_score:8.2f} | Clé : {meilleure_cle} | {texte_apercu}...")
+            meilleur_score = top_solutions[0][0]
+            meilleure_cle_apercu = top_solutions[0][1]
+            texte_apercu = top_solutions[0][2][:50]
+            print(f"Itération {i:5d} | Score : {meilleur_score:8.2f} | Clé : {meilleure_cle_apercu} | {texte_apercu}...")
             
-    return meilleure_cle, dechiffrer_permutation(cryptogramme, meilleure_cle)
-
-
-
-
+    return [(score, cle, texte) for score, cle, texte, _ in top_solutions]
 
 
 if __name__ == "__main__":
@@ -173,23 +151,27 @@ if __name__ == "__main__":
     print("Calcul des statistiques des digrammes...")
     stats_digrammes_ref = statistiques_digrammes(texte_ref)
     
-    
     # --- 2. TEST : ATTAQUE PAR SUBSTITUTION ---
     print("\n" + "="*50)
     print("   TEST 1 : ATTAQUE MCMC PAR SUBSTITUTION")
     print("="*50)
     
-    message_secret_sub = "CECI EST UN MESSAGE SECRET QUE NOUS ALLONS TENTER DE DECHIFFRER AVEC NOTRE SUPER ALGORITHME MCMC"
+    # On utilise un vrai morceau de texte long (400 caractères) pour que les probabilités fonctionnent
+    message_secret_sub = texte_ref[:400] 
+    
     alphabet_test = extraire_alphabet(message_secret_sub)
     cle_secrete_sub = generer_cle_aleatoire(alphabet_test)
     cryptogramme_sub = chiffrer(message_secret_sub, cle_secrete_sub)
     
-    print(f"Cryptogramme à casser :\n{cryptogramme_sub}\n")
+    print(f"Cryptogramme à casser (extrait de 400 caractères) :\n{cryptogramme_sub[:100]}...\n")
     
-    cle_trouvee_sub, texte_trouve_sub = attaque_mcmc_substitution(cryptogramme_sub, stats_digrammes_ref, iterations=15000)
+    # On monte un peu les itérations car le texte est plus long et l'espace des clés est immense
+    famille_solutions_sub = attaque_mcmc_substitution(cryptogramme_sub, stats_digrammes_ref, iterations=25000, top_n=5)
     
-    print("\n--- RÉSULTAT FINAL SUBSTITUTION ---")
-    print(texte_trouve_sub)
+    print("\n--- RÉSULTAT FINAL SUBSTITUTION (Famille de clés) ---")
+    for rang, (score, cle, texte) in enumerate(famille_solutions_sub, 1):
+        print(f"\n[Solution #{rang}] Score : {score:.2f}")
+        print(f"Texte déchiffré (extrait) : {texte[:150]}...")
 
 
     # --- 3. TEST : ATTAQUE PAR PERMUTATION ---
@@ -197,19 +179,21 @@ if __name__ == "__main__":
     print("   TEST 2 : ATTAQUE MCMC PAR PERMUTATION")
     print("="*50)
     
-    message_secret_perm = "L ALGORITHME DOIT AUSSI ETRE CAPABLE DE RETROUVER L ORDRE DES BLOCS POUR LA PERMUTATION"
+    # On prend un autre morceau du texte pour la permutation
+    message_secret_perm = texte_ref[400:800]
+    
     longueur_l = 4
-    # On définit une clé secrète de longueur 4 (ex: [2, 0, 3, 1])
     cle_secrete_perm = list(range(longueur_l))
     random.shuffle(cle_secrete_perm) 
     
     cryptogramme_perm = chiffrer_permutation(message_secret_perm, cle_secrete_perm)
     
     print(f"Clé secrète utilisée : {cle_secrete_perm}")
-    print(f"Cryptogramme à casser :\n{cryptogramme_perm}\n")
+    print(f"Cryptogramme à casser :\n{cryptogramme_perm[:100]}...\n")
     
-    cle_trouvee_perm, texte_trouve_perm = attaque_mcmc_permutation(cryptogramme_perm, stats_digrammes_ref, longueur_cle=longueur_l, iterations=10000)
+    famille_solutions_perm = attaque_mcmc_permutation(cryptogramme_perm, stats_digrammes_ref, longueur_cle=longueur_l, iterations=15000, top_n=5)
     
-    print("\n--- RÉSULTAT FINAL PERMUTATION ---")
-    print(f"Clé trouvée : {cle_trouvee_perm}")
-    print(f"Texte déchiffré : {texte_trouve_perm}")
+    print("\n--- RÉSULTAT FINAL PERMUTATION (Famille de clés) ---")
+    for rang, (score, cle, texte) in enumerate(famille_solutions_perm, 1):
+        print(f"\n[Solution #{rang}] Score : {score:.2f} | Clé : {cle}")
+        print(f"Texte déchiffré (extrait) : {texte[:150]}...")
