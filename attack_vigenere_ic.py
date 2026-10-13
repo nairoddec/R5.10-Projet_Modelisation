@@ -9,21 +9,21 @@ grâce à l'indice de coïncidence (IC).
      (test du khi-deux contre un texte de référence).
 
 Utilisation :
-    python attack_vigenere_ic.py                 # pages Wikipédia
+    python attack_vigenere_ic.py
+Le programme demande ensuite :
+  - la page Wikipédia de référence (titre ou URL, Entrée = valeur par défaut) ;
+  - la clé secrète de Vigenère à utiliser pour chiffrer le message.
 """
 
-import random
-import sys
 from collections import Counter
 
 from fonction_outils import recuperer_texte_mediawiki, nettoyer_texte
 from outils_digrammes import extraire_alphabet
-from attack_vigenere import chiffrement_vigenere, dechiffrement_vigenere
+from attack_vigenere import (chiffrement_vigenere, dechiffrement_vigenere,
+                             normaliser_cle)
 
 
-# ---------------------------------------------------------------------------
 # 1. Indice de coïncidence
-# ---------------------------------------------------------------------------
 
 def indice_coincidence(texte: str) -> float:
     """IC = somme n_i (n_i - 1) / (N (N - 1)) : proba que 2 caractères tirés
@@ -61,9 +61,7 @@ def estimer_longueur(profil: dict[int, float], ratio: float = 0.9) -> int:
     return max(profil, key=profil.get)
 
 
-# ---------------------------------------------------------------------------
 # 2. Retrouver la clé une fois L connue
-# ---------------------------------------------------------------------------
 
 def frequences_reference(texte_reference: str, alphabet: list[str]) -> dict:
     """Fréquences des caractères (avec +1 pour éviter les zéros)."""
@@ -99,9 +97,7 @@ def retrouver_cle(cryptogramme: str, longueur: int, alphabet: list[str],
     return "".join(cle)
 
 
-# ---------------------------------------------------------------------------
-# 3. Affichage et expériences
-# ---------------------------------------------------------------------------
+# 3. Affichage
 
 def afficher_profil(profil: dict[int, float], ic_fr: float, ic_alea: float,
                     fichier_png: str = "profil_ic_vigenere.png") -> None:
@@ -128,65 +124,72 @@ def afficher_profil(profil: dict[int, float], ic_fr: float, ic_alea: float,
         print(f"L={L:2d} | {valeur:.4f} | {'#' * int(valeur * 600)}")
 
 
-def experience_longueur_texte(message_clair: str, alphabet: list[str],
-                              ic_fr: float, ic_alea: float,
-                              longueur_cle: int = 8, essais: int = 40) -> None:
-    """Taux de réussite de l'estimation de L selon la taille du cryptogramme."""
-    print(f"\n--- Réussite de l'estimation de L (clé de longueur {longueur_cle}) ---")
-    lettres = [c for c in alphabet if c != " "]
-    for taille in (100, 200, 400, 800, 1600, 3200):
-        if taille > len(message_clair):
-            break
-        reussites = 0
-        for _ in range(essais):
-            debut = random.randint(0, len(message_clair) - taille)
-            extrait = message_clair[debut:debut + taille]
-            cle = "".join(random.choice(lettres) for _ in range(longueur_cle))
-            crypto = chiffrement_vigenere(extrait, cle, alphabet)
-            profil = profil_ic(crypto, 20)
-            if estimer_longueur(profil) == longueur_cle:
-                reussites += 1
-        print(f"{taille:5d} caractères : {reussites}/{essais} ({100 * reussites / essais:.0f} %)")
+# 4. Saisies utilisateur
+
+URL_MESSAGE = "https://fr.wikipedia.org/wiki/Cathédrale"   # texte à chiffrer
+REFERENCE_PAR_DEFAUT = "Château"                           # texte de référence
 
 
-def charger_textes(arguments: list[str]) -> tuple[str, str]:
-    """Renvoie (texte du message, texte de référence)."""
-    if len(arguments) >= 2:
-        with open(arguments[0], encoding="utf-8") as f1, \
-             open(arguments[1], encoding="utf-8") as f2:
-            return f1.read(), f2.read()
-    url_message = "https://fr.wikipedia.org/wiki/Cathédrale"
-    url_reference = "https://fr.wikipedia.org/wiki/Château"
-    return (recuperer_texte_mediawiki(url_message),
-            recuperer_texte_mediawiki(url_reference))
+def construire_url(saisie: str) -> str:
+    """Accepte une URL complète ou simplement un titre de page Wikipédia."""
+    saisie = saisie.strip()
+    if saisie.startswith("http"):
+        return saisie
+    return "https://fr.wikipedia.org/wiki/" + saisie.replace(" ", "_")
+
+
+def demander_reference() -> str:
+    """Demande la page Wikipédia servant de texte de référence."""
+    saisie = input(f"Page Wikipédia de référence (titre ou URL) "
+                   f"[Entrée = {REFERENCE_PAR_DEFAUT}] : ").strip()
+    return construire_url(saisie or REFERENCE_PAR_DEFAUT)
+
+
+def demander_cle(alphabet: list[str]) -> str:
+    """Demande une clé et la redemande tant qu'elle n'est pas utilisable."""
+    while True:
+        saisie = input("Clé secrète de Vigenère (lettres uniquement) : ")
+        cle = normaliser_cle(saisie)
+        if not cle:
+            print("  Clé vide ou sans lettre : recommence.")
+            continue
+        inconnus = sorted({c for c in cle if c not in alphabet})
+        if inconnus:
+            print(f"  Caractères absents de l'alphabet du message : {inconnus}")
+            continue
+        if cle != saisie:
+            print(f"  Clé normalisée : {cle}")
+        return cle
 
 
 if __name__ == "__main__":
-    random.seed(42)
+    url_reference = demander_reference()
     try:
-        brut_message, brut_reference = charger_textes(sys.argv[1:])
+        texte_reference = nettoyer_texte(recuperer_texte_mediawiki(url_reference))
+        message_clair = nettoyer_texte(recuperer_texte_mediawiki(URL_MESSAGE))
     except Exception as erreur:
         print(f"Impossible de charger les textes : {erreur}")
         raise SystemExit(1)
 
-    message_clair = nettoyer_texte(brut_message)
-    texte_reference = nettoyer_texte(brut_reference)
+    if url_reference.rstrip("/").lower() == URL_MESSAGE.lower():
+        print("Attention : la référence est la même page que le message, "
+              "le résultat sera trop favorable.")
+
     alphabet = extraire_alphabet(message_clair)
+    vraie_cle = demander_cle(alphabet)
 
     ic_fr = indice_coincidence(texte_reference)
     ic_alea = 1 / len(alphabet)
-    print(f"Alphabet : {len(alphabet)} caractères | longueur du clair : {len(message_clair)}")
+    print(f"\nAlphabet : {len(alphabet)} caractères | longueur du clair : {len(message_clair)}")
     print(f"IC du français (référence) : {ic_fr:.4f}")
     print(f"IC d'un texte aléatoire    : {ic_alea:.4f}  (= 1/{len(alphabet)})")
 
-    # Clé volontairement absente de tout dictionnaire
-    vraie_cle = "MODELISATION"
     cryptogramme = chiffrement_vigenere(message_clair, vraie_cle, alphabet)
     print(f"\nClé secrète : {vraie_cle} (longueur {len(vraie_cle)})")
     print(f"Extrait chiffré : {cryptogramme[:100]}...")
 
-    # Étape 1 : longueur
-    profil = profil_ic(cryptogramme, 20)
+    # Étape 1 : longueur (on teste au moins jusqu'à 2 fois la longueur de la clé)
+    profil = profil_ic(cryptogramme, max(20, 2 * len(vraie_cle)))
     afficher_profil(profil, ic_fr, ic_alea)
     longueur = estimer_longueur(profil)
     print(f"\nLongueur de clé estimée : {longueur}")
@@ -197,6 +200,3 @@ if __name__ == "__main__":
     print(f"Clé retrouvée : {cle_trouvee}")
     print(f"Extrait déchiffré : "
           f"{dechiffrement_vigenere(cryptogramme, cle_trouvee, alphabet)[:200]}...")
-
-    # Expérience : combien de texte faut-il ?
-    experience_longueur_texte(message_clair, alphabet, ic_fr, ic_alea)

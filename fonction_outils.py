@@ -55,6 +55,7 @@ def est_caractere_analyse(caractere: str) -> bool:
 
 def nettoyer_texte(texte: str) -> str:
     """Met en majuscules, retire les accents, chiffres et ponctuation."""
+    texte = texte.upper().replace("Œ", "OE").replace("Æ", "AE")
     texte = unicodedata.normalize("NFD", texte.upper())
 
     texte = "".join(
