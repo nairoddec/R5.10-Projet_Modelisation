@@ -1,30 +1,28 @@
 from collections import Counter
-import json
 import unicodedata
-import urllib.request
-from urllib.parse import unquote, urlencode, urlsplit
 
-from fonction_outils import recuperer_texte_mediawiki, nettoyer_texte
+from fonction_outils import recuperer_texte_mediawiki
 
-def extraire_titre_et_api(url):
-    """Vérifie une URL MediaWiki et renvoie le titre et l'URL de son API."""
-    morceaux_url = urlsplit(url)
 
-    if not morceaux_url.scheme or not morceaux_url.netloc:
-        raise ValueError("L'URL fournie est invalide")
-    if "/wiki/" not in morceaux_url.path:
-        raise ValueError("L'URL doit être une page MediaWiki (/wiki/Titre)")
+def normaliser_texte_multilingue(texte):
+    """Normalise la casse en préservant les lettres Unicode et leurs signes."""
+    texte = unicodedata.normalize("NFC", texte).upper()
+    caracteres = []
 
-    titre = unquote(morceaux_url.path.split("/wiki/", 1)[1])
-    if not titre:
-        raise ValueError("Le titre de la page MediaWiki est vide")
+    for caractere in texte:
+        categorie = unicodedata.category(caractere) #Lu pour Lettre majuscule,Nd pour Chiffre décimal, Po pour Ponctuation
+        if categorie.startswith(("L", "M")):
+            # L = lettre, M = signe combinant (accents et signes d'écriture).
+            caracteres.append(caractere)
+        else:
+            # Les espaces, ponctuations et chiffres séparent les séquences.
+            caracteres.append(" ")
 
-    api_url = f"{morceaux_url.scheme}://{morceaux_url.netloc}/w/api.php"
-    return titre, api_url
+    return " ".join("".join(caracteres).split())
 
 
 def calculer_statistiques(texte):
-    """Renvoie les nombres de caractères et leurs fréquences."""
+    """Compte les caractères Unicode, espaces compris."""
     return {
         "total_avec_espaces": len(texte),
         "total_sans_espaces": len(texte.replace(" ", "")),
@@ -32,18 +30,19 @@ def calculer_statistiques(texte):
     }
 
 
-def afficher_statistiques(url, statistiques, limite=27):
+def afficher_statistiques(source, statistiques, limite=27):
     """Affiche les caractères les plus fréquents."""
     total = statistiques["total_avec_espaces"]
     frequences = statistiques["frequences"]
 
-    print(f"=== Statistiques pour l'URL : {url} ===")
+    print(f"=== Statistiques pour : {source} ===")
     print(f"Nombre total de caractères (avec espaces) : {total}")
     print(
         "Nombre total de caractères (sans espaces) : "
         f"{statistiques['total_sans_espaces']}"
     )
-    print(f"\n--- Top {limite} des caractères les plus fréquents ---")
+    titre = "Tous les caractères" if limite is None else f"Top {limite}"
+    print(f"\n--- {titre} les plus fréquents ---")
 
     for caractere, frequence in frequences.most_common(limite):
         nom_caractere = "'Espace'" if caractere == " " else f"'{caractere}'"
@@ -51,19 +50,40 @@ def afficher_statistiques(url, statistiques, limite=27):
         print(f"{nom_caractere} : {frequence} fois ({pourcentage:.2f}%)")
 
 
-def analyser_page_web(url, limite=27):
-    """Récupère, nettoie, analyse et affiche les statistiques d'une page MediaWiki."""
-    try:
-        texte_brut = recuperer_texte_mediawiki(url)
-        texte_propre = nettoyer_texte(texte_brut)
-        statistiques = calculer_statistiques(texte_propre)
-        afficher_statistiques(url, statistiques, limite)
-        return statistiques
-    except Exception as erreur:
-        print(f"Une erreur est survenue lors de la récupération : {erreur}")
-        return None
+def saisir_texte_utilisateur(nom):
+    """Demande un texte directement ou le récupère depuis une URL MediaWiki."""
+    while True:
+        choix = input(
+            f"\nSource pour {nom} :\n"
+            "1. Saisir/coller le texte\n"
+            "2. Récupérer une page MediaWiki\n"
+            "Votre choix (1 ou 2) : "
+        ).strip()
+        if choix in {"1", "2"}:
+            break
+        print("Choix invalide. Entrez 1 ou 2.")
+
+    if choix == "1":
+        texte = input(f"Saisissez {nom} sur une ligne :\n")
+        return normaliser_texte_multilingue(texte), "texte saisi"
+
+    url = input("URL de la page MediaWiki : ").strip()
+    texte = recuperer_texte_mediawiki(url)
+    return normaliser_texte_multilingue(texte), url
 
 
 if __name__ == "__main__":
-    url_cible = "https://fr.wikipedia.org/wiki/Château"
-    analyser_page_web(url_cible)
+    try:
+        texte, source = saisir_texte_utilisateur("le texte à analyser")
+        limite_saisie = input(
+            "Nombre de caractères à afficher (27 par défaut, 0 pour tous) : "
+        ).strip()
+        limite = int(limite_saisie) if limite_saisie else 27
+        if limite < 0:
+            raise ValueError("Le nombre doit être positif ou nul.")
+        if limite == 0:
+            limite = None
+        statistiques = calculer_statistiques(texte)
+        afficher_statistiques(source, statistiques, limite)
+    except Exception as erreur:
+        print(f"Impossible d'analyser le texte : {erreur}")
