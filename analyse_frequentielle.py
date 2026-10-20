@@ -5,17 +5,17 @@ from fonction_outils import recuperer_texte_mediawiki
 
 
 def normaliser_texte_multilingue(texte):
-    """Normalise la casse en préservant les lettres Unicode et leurs signes."""
+    """Normalise la casse en préservant les lettres Unicode de toute langue."""
+    # Préserve le 'ß' allemand sous sa majuscule officielle 'ẞ' (U+1E9E)
+    texte = texte.replace("ß", "ẞ")
     texte = unicodedata.normalize("NFC", texte).upper()
     caracteres = []
 
     for caractere in texte:
-        categorie = unicodedata.category(caractere) #Lu pour Lettre majuscule,Nd pour Chiffre décimal, Po pour Ponctuation
+        categorie = unicodedata.category(caractere)
         if categorie.startswith(("L", "M")):
-            # L = lettre, M = signe combinant (accents et signes d'écriture).
             caracteres.append(caractere)
         else:
-            # Les espaces, ponctuations et chiffres séparent les séquences.
             caracteres.append(" ")
 
     return " ".join("".join(caracteres).split())
@@ -31,23 +31,23 @@ def calculer_statistiques(texte):
 
 
 def afficher_statistiques(source, statistiques, limite=27):
-    """Affiche les caractères les plus fréquents."""
+    """Affiche les caractères les plus fréquents avec une barre visuelle simple."""
     total = statistiques["total_avec_espaces"]
     frequences = statistiques["frequences"]
 
-    print(f"=== Statistiques pour : {source} ===")
-    print(f"Nombre total de caractères (avec espaces) : {total}")
-    print(
-        "Nombre total de caractères (sans espaces) : "
-        f"{statistiques['total_sans_espaces']}"
-    )
+    print(f"\n=== Statistiques pour : {source} ===")
+    print(f"Total caractères (avec espaces) : {total}")
+    print(f"Total caractères (sans espaces) : {statistiques['total_sans_espaces']}")
+    print(f"Nombre de caractères distincts  : {len(frequences)}")
+
     titre = "Tous les caractères" if limite is None else f"Top {limite}"
     print(f"\n--- {titre} les plus fréquents ---")
 
     for caractere, frequence in frequences.most_common(limite):
         nom_caractere = "'Espace'" if caractere == " " else f"'{caractere}'"
         pourcentage = (frequence / total) * 100 if total else 0
-        print(f"{nom_caractere} : {frequence} fois ({pourcentage:.2f}%)")
+        barre = "█" * int(pourcentage / 2)
+        print(f"{nom_caractere:<10} : {frequence:5d} fois ({pourcentage:5.2f}%) {barre}")
 
 
 def saisir_texte_utilisateur(nom):
@@ -67,7 +67,7 @@ def saisir_texte_utilisateur(nom):
         texte = input(f"Saisissez {nom} sur une ligne :\n")
         return normaliser_texte_multilingue(texte), "texte saisi"
 
-    url = input("URL de la page MediaWiki : ").strip()
+    url = input("URL de la page MediaWiki (ex: https://fr.wikipedia.org/wiki/Château) : ").strip()
     texte = recuperer_texte_mediawiki(url)
     return normaliser_texte_multilingue(texte), url
 
