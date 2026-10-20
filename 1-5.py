@@ -213,27 +213,29 @@ if __name__ == "__main__" :
     if len(texte_propre_user) < 300 :
         print("\n[Attention] Votre texte fait moins de 300 caractères. L'attaque MCMC risque de manquer de données statistiques pour converger parfaitement.")
 
-    # On limite la longueur à ~800 caractères max pour que le calcul reste rapide (et suffisant)
-    texte_cible = texte_propre_user[:800]
+
+    # On limite la longueur
+    texte_cible_sub = texte_propre_user[:10000]
+    texte_cible_perm = texte_propre_user[:1000]
     
     # 3. CHIFFREMENT DU TEXTE POUR LE TEST (si nécessaire)
     if est_deja_chiffre == 'n' :
         print("\nChiffrement secret du texte en cours pour le test")
         # Substitution
-        alphabet_test = extraire_alphabet(texte_cible)
+        alphabet_test = extraire_alphabet(texte_cible_sub)
         cle_sec_sub = generer_cle_aleatoire(alphabet_test)
-        crypto_sub = chiffrer(texte_cible, cle_sec_sub)
+        crypto_sub = chiffrer(texte_cible_sub, cle_sec_sub)
         
         # Permutation (longueur 4 fixée pour la simulation, mais l'attaque ne la connaît pas :
         # elle testera toutes les longueurs de l_min à l_max)
         longueur_perm_secrete = 4
         cle_sec_perm = list(range(longueur_perm_secrete))
         random.shuffle(cle_sec_perm)
-        crypto_perm = chiffrer_permutation(texte_cible, cle_sec_perm)
+        crypto_perm = chiffrer_permutation(texte_cible_perm, cle_sec_perm)
         print(f"Clé de permutation secrète : {cle_sec_perm}")
     else :
-        crypto_sub = texte_cible
-        crypto_perm = texte_cible
+        crypto_sub = texte_cible_sub
+        crypto_perm = texte_cible_perm
 
     saisie_l_max = input("Pour l'attaque par permutation, tester les longueurs de clé de 2 jusqu'à ? (ex : 8) : ").strip()
     l_max_perm = int(saisie_l_max) if saisie_l_max else 8
