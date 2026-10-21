@@ -25,11 +25,11 @@ from attack_vigenere import (chiffrement_vigenere, dechiffrement_vigenere,
 
 # 1. Indice de coïncidence
 
-def indice_coincidence(texte: str) -> float:
+def indice_coincidence(texte: str) -> float :
     """IC = somme n_i (n_i - 1) / (N (N - 1)) : proba que 2 caractères tirés
     sans remise dans le texte soient identiques."""
     n = len(texte)
-    if n < 2:
+    if n < 2 :
         return 0.0
     comptes = Counter(texte)
     return sum(c * (c - 1) for c in comptes.values()) / (n * (n - 1))
