@@ -3,7 +3,7 @@ import string
 
 from cesar import chiffrement_cesar, dechiffrement_cesar
 from fonction_outils import nettoyer_texte, recuperer_texte_mediawiki
-from analyse_frequentielle import saisir_texte_utilisateur
+from analyse_frequentielle import saisir_texte_utilisateur,calculer_statistiques
 
 # Alphabet latin usuel de 26 lettres (A à Z)
 ALPHABET = list(string.ascii_uppercase)
@@ -22,18 +22,12 @@ _CACHE_FREQUENCES: dict[str, dict[str, float]] = {}
 
 
 def extraire_frequences_reference(texte_reference: str) -> dict[str, float]:
-    """Calcule dynamiquement les fréquences de chaque lettre dans un texte de référence."""
     texte_propre = nettoyer_texte(texte_reference)
-    lettres = [c for c in texte_propre if c in ALPHABET]
-    total = len(lettres)
-
-    if total == 0:
-        return {lettre: 1.0 / len(ALPHABET) for lettre in ALPHABET}
-
-    # Lissage de Laplace (+1) pour éviter les probabilités nulles
-    comptes = Counter(lettres)
-    total_lisse = total + len(ALPHABET)
-    return {lettre: (comptes[lettre] + 1) / total_lisse for lettre in ALPHABET}
+    comptes = calculer_statistiques(texte_propre)["frequences"]
+    
+    # On applique le lissage de Laplace sur les 26 lettres de A à Z
+    total_lisse = sum(comptes.get(c, 0) for c in ALPHABET) + len(ALPHABET)
+    return {c: (comptes.get(c, 0) + 1) / total_lisse for c in ALPHABET}
 
 
 def obtenir_frequences_langue(source: str = "1") -> tuple[dict[str, float], str]:
@@ -73,26 +67,18 @@ def distance_khi_deux(texte: str, freq_reference: dict[str, float]) -> float:
     comptes = Counter(lettres)
     score = 0.0
     for lettre in ALPHABET:
-        observe = comptes[lettre]
-        attendu = n * freq_reference[lettre]
+        observe = comptes[lettre]               #Oi
+        attendu = n * freq_reference[lettre]    #Ei
         score += ((observe - attendu) ** 2) / attendu
-    return score
+    return score    #res x^2
+
 
 
 def attaque_frequentielle_cesar(
     texte_chiffre: str,
     freq_ref: dict[str, float] | None = None,
 ) -> dict:
-    """Attaque fréquentielle sur le chiffre de César.
-
-    Principe cryptanalytique :
-    1. Compte les occurrences des lettres dans le cryptogramme.
-    2. Identifie la lettre chiffrée dominante (C_max).
-    3. Déduit immédiatement le décalage sous l'hypothèse principale : C_max -> Lettre_max
-       k = (position(C_max) - position(Lettre_max)) mod 26
-    4. Évalue et départage l'ensemble des 26 décalages via la distance du Khi-deux (χ²)
-       pour garantir la robustesse même sur les textes atypiques ou courts.
-    """
+  
     texte_chiffre = nettoyer_texte(texte_chiffre)
     lettres_crypto = [c for c in texte_chiffre if c in ALPHABET]
     if not lettres_crypto:
