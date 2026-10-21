@@ -11,6 +11,26 @@ from substitution import chiffrer, dechiffrer, extraire_alphabet, generer_cle_al
 from permutation import dechiffrer_permutation, chiffrer_permutation
 
 
+def saisir_texte_multiligne(invite) :
+    """
+    Lit un texte sur PLUSIEURS lignes (un Ctrl+V de texte multiligne fonctionne).
+    La saisie s'arrête quand on tape FIN seul sur une ligne (ou fin de saisie : Ctrl+Z puis
+    Entrée sous Windows, Ctrl+D sous Linux/Mac). Le texte est renvoyé tel que collé,
+    avec ses retours à la ligne.
+    """
+    print(f"{invite}\n(terminez en tapant FIN seul sur une nouvelle ligne)")
+    lignes = []
+    while True :
+        try :
+            ligne = input()
+        except EOFError :
+            break
+        if ligne.strip().upper() == "FIN" :
+            break
+        lignes.append(ligne)
+    return "\n".join(lignes)
+
+
 #  LE SCORE : mesure à quel point un texte "ressemble" à du français
 
 def calculer_score_log(texte_dechiffre, stats_reference) :
@@ -261,8 +281,8 @@ if __name__ == "__main__" :
         url_user = input("Entrez l'URL (ex : https://fr.wikipedia.org/wiki/Cryptographie) : ").strip()
         texte_brut_user = recuperer_texte_mediawiki(url_user)
     else :
-        # Attention : input() ne lit qu'UNE ligne (un texte collé sur plusieurs lignes serait coupé)
-        texte_brut_user = input("Collez ou tapez votre texte ici : ")
+        # input() ne lit qu'UNE ligne : on utilise une saisie multiligne (terminée par FIN)
+        texte_brut_user = saisir_texte_multiligne("Collez ou tapez votre texte ici :")
         
     # Si le texte est déjà un cryptogramme, on l'attaque tel quel ;
     # sinon on le chiffre nous-mêmes pour pouvoir tester l'attaque.
@@ -285,7 +305,7 @@ if __name__ == "__main__" :
     # On limite la longueur
     # (plus de texte = meilleur déchiffrement mais calcul plus long ;
     #  chaque itération recompte les bigrammes de tout le texte)
-    texte_cible_sub = texte_propre_user[:10000]   # substitution
+    texte_cible_sub = texte_propre_user[:5000]   # substitution
     texte_cible_perm = texte_propre_user[:1000]   # permutation
     
     # 3. CHIFFREMENT DU TEXTE POUR LE TEST (si nécessaire)
