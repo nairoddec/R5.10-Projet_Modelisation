@@ -27,8 +27,7 @@ from fonction_outils import recuperer_texte_mediawiki, nettoyer_texte
 from outils_digrammes import extraire_alphabet
 # Chiffrement / déchiffrement de Vigenère déjà écrits pour l'attaque par
 # dictionnaire. normaliser_cle nettoie une clé (majuscules, sans espaces).
-from attack_vigenere import (chiffrement_vigenere, dechiffrement_vigenere,
-                             normaliser_cle)
+from attack_vigenere import (chiffrement_vigenere, dechiffrement_vigenere, normaliser_cle)
 
 
 # 1. Indice de coïncidence
@@ -112,9 +111,7 @@ def khi_deux(colonne: str, freq_ref: dict) -> float:
     #  - attendu = n * p      : combien de fois on l'attendrait si la colonne
     #                           suivait les fréquences de référence
     # Plus la somme est petite, plus la colonne ressemble au français.
-    return sum(
-        (comptes[c] - n * p) ** 2 / (n * p) for c, p in freq_ref.items()
-    )
+    return sum((comptes[c] - n * p) ** 2 / (n * p) for c, p in freq_ref.items())
 
 
 def retrouver_cle(cryptogramme: str, longueur: int, alphabet: list[str],
