@@ -1,13 +1,57 @@
 ### R5.10-Projet_Modelisation
 
+## Hub de lancement (`main.py`)
+
+Un tableau de bord interactif centralise l'accès à l'ensemble des modules, chiffrements et attaques du projet avec une interface visuelle soignée en terminal (couleurs ANSI, arborescences UTF-8, chronométrage et gestion des interruptions Ctrl+C) :
+
+```bash
+python3 main.py
+```
+
+### Fonctionnement du Hub
+
+Le Hub propose un menu interactif structuré en 3 catégories opérationnelles :
+
+- **Section 1 — Chiffrements élémentaires & Analyses fondamentales** :
+  - `[ 1 ] César` : Menu interactif pour chiffrer, déchiffrer avec une clé ou tester les 26 décalages en force brute (`cesar.py`, `attack_cesar_fb.py`).
+  - `[ 2 ] Vigenère` : Chiffrement et déchiffrement polyalphabétique avec mot-clé dynamique (`vigenere.py`).
+  - `[ 3 ] Substitution` : Chiffrement monoalphabétique avec inclusion complète de l'espace (27 symboles) (`substitution.py`).
+  - `[ 4 ] Permutation` : Chiffrement par permutation de positions et gestion du padding d'espaces (`permutation.py`).
+  - `[ 5 ] Markov & Digrammes` : Calcul de la matrice stochastique $27 \times 27$ et simulation de texte de Markov (`outils_digrammes.py`).
+  - `[ 6 ] Fréquences multilingues` : Analyse statistique des lettres sur 5 langues (FR, EN, ES, DE, IT) (`analyse_frequentielle.py`).
+
+- **Section 2 — Cryptanalyses & Attaques statistiques avancées** :
+  - `[ 7 ] Attaque César (Khi-deux χ²)` : Identification analytique directe de la clé sur profils Wikipédia (`attack_cesar_frequentielle.py`).
+  - `[ 8 ] Attaque Vigenère (Indice de Coïncidence)` : Déduction de la longueur de clé par IC de Friedman et résolution colonne par colonne (`attack_vigenere_ic.py`).
+  - `[ 9 ] Attaque Vigenère (Dictionnaire & Digrammes)` : Recherche de mot-clé guidée par la log-vraisemblance des transitions (`attack_vigenere.py`).
+  - `[ 10] Attaque MCMC globale` : Heuristique de Metropolis-Hastings avec score logarithmique et adaptation dynamique des itérations (`1-5.py`).
+
+- **Section 3 — Validation & Démonstrations en direct (Conditions réelles d'oral)** :
+  - `[ 11] Tests unitaires & d'intégration` : Lancement de la suite complète de 29 tests automatisés (`test_projet.py`).
+  - `[ 12] Démo Express crypto01.txt` : Déchiffrement direct en direct par MCMC substitution du roman *Le Colonel Chabert* d'Honoré de Balzac.
+  - `[ 13] Démo Express crypto02.txt` : Déchiffrement direct en direct par MCMC permutation ($l=9$) de la pièce *Le Cid* de Pierre Corneille.
+
+---
+
 ## Compte RENDU
 
+Ce projet porte sur la modélisation stochastique appliquée à la cryptanalyse de chiffrements classiques (César, Vigenère, substitution monoalphabétique et permutation de positions).
 
+La méthode centrale repose sur l'algorithme **MCMC (Markov Chain Monte Carlo)** avec l'échantillonneur de **Metropolis-Hastings** :
+- **Fonction score $S(k)$** : Mesure à quel point le texte déchiffré avec une clé candidate $k$ « ressemble » à du français naturel, en exploitant les fréquences des transitions de digrammes (paires de caractères consécutifs).
+- **Exploration stochastique** : Face à des espaces d'états gigantesques ($27! \approx 1{,}08 \times 10^{28}$ pour la substitution), l'algorithme effectue une marche aléatoire guidée. En autorisant avec une probabilité contrôlée des transitions vers des clés de score inférieur, la chaîne échappe aux pièges des maximums locaux et converge vers la clé optimale.
 
 
 ## Exemples
 
-
+- **Exemple 1 — Substitution monoalphabétique (`crypto01.txt`)** :
+  - Extrait chiffré : `DTGTYS XS QWRPWA RS ATRTGSR ADWQSYU W BWXWBS RW ATBUSJJS...`
+  - Résultat de l'attaque MCMC : Le texte clair est reconstitué en moins de 3 000 itérations avec un score dépassant 6 000. Il s'agit du roman *Le Colonel Chabert* d'Honoré de Balzac : `HONORE DE BALZAC LE COLONEL CHABERT A MADAME LA COMTESSE...`
+- **Exemple 2 — Permutation par blocs (`crypto02.txt`)** :
+  - Extrait chiffré : `CRPE IRE EIONLREL  C EDL I E ATRCEP E MECIRS IRN MEPE...`
+  - Résultat de l'attaque MCMC : Le pic de score apparaît nettement pour une longueur de bloc $l = 9$ (clé `[2, 5, 3, 6, 1, 8, 7, 4, 0]`, score $\approx 4\,342$ contre $\approx 3\,500$ pour les autres longueurs). Le texte clair reconstruit correspond à la pièce *Le Cid* de Pierre Corneille : `PIERRE CORNEILLE LE CID ACTE PREMIER SCENE PREMIERE...`
+- **Sensibilité aux espaces et longueur de clé (7, 8 ou 9)** :
+  - Dans une permutation, l'espace est une position physique au même titre qu'une lettre. La présence d'espaces multiples consécutifs, d'espaces insécables ou de caractères de padding en fin de bloc modifie l'alignement modulaire. Si un cryptogramme est tronqué ou si les espaces sont altérés, la longueur apparente peut sembler flotter. Le programme teste systématiquement chaque longueur de clé de façon indépendante, garantissant de trouver la longueur qui maximise la vraisemblance linguistique sans biais préalable.
 
 
 ## Questions du TD
@@ -57,3 +101,52 @@ La chaîne de Markov construite par l'algorithme MCMC possède ces deux proprié
     - Si la condition d'acceptation n'est pas remplie, le programme refuse la mutation, c'est-à-dire qu'il reste dans l'état k actuel.
     - Cette probabilité non nulle de stagner sur place (une transition de l'état k vers lui-même) brise instantanément toute forme de périodicité, empêchant la séquence de s'enfermer dans un cycle répétitif.
 
+
+## Explorations statistiques
+
+- **Profils de référence multilingues dynamiques** : Téléchargement et extraction à la volée de corpus Wikipédia pour 5 langues (Français, Anglais, Espagnol, Allemand, Italien). Zéro constante codée en dur dans le code source : les distributions empiriques de fréquences s'adaptent dynamiquement à la langue choisie.
+- **Test d'adéquation du Khi-deux ($\chi^2$) de Pearson** : Implémentation d'un discriminateur statistique comparant les effectifs observés $O_c$ aux effectifs théoriques attendus $E_c = N \cdot p_c$ sur les 26 lettres de l'alphabet. Ce test sert de fonction de coût pour départager automatiquement les clés candidates.
+- **Indice de Coïncidence (IC) de Friedman** : Analyse statistique dans `attack_vigenere_ic.py` calculant la probabilité que deux lettres tirées au hasard dans le texte soient identiques ($IC = \frac{\sum n_i(n_i - 1)}{N(N - 1)}$). Cette métrique permet d'estimer avec précision la période de la clé d'un chiffre polyalphabétique sans force brute.
+- **Étude de convergence de l'algorithme MCMC** :
+  - Pour la substitution : observation d'une montée rapide du score log dès les premières 3 000 itérations, suivie d'une phase de stabilisation fine.
+  - Pour la permutation : mise en évidence d'un contraste franc entre les longueurs de blocs incorrectes (qui stagnent sur un plateau bas de score vers 4 300) et la longueur exacte (qui produit un pic net dépassant 5 100, comme observé sur *Germinal* à $l = 9$).
+
+
+## Variantes
+
+- **Attaque fréquentielle directe vs Force brute (César)** : Au lieu d'itérer aveuglément sur les 26 décalages, déduction analytique directe en complexité $\mathcal{O}(1)$ en reliant la lettre chiffrée dominante $C_{\max}$ au pic naturel de la langue $L_{\max}$ par la relation modulaire $k = (\text{index}(C_{\max}) - \text{index}(L_{\max})) \pmod{26}$.
+- **Substitution avec inclusion de l'espace (alphabet à 27 caractères)** : Extension complète du sujet intégrant l'espace comme un caractère interchangeable au même titre que les lettres A–Z. Cette variante supprime les repères visuels des mots clairs, augmentant la complexité de l'espace de recherche ($27! \approx 1{,}08 \times 10^{28}$ clés possibles).
+- **Opérateurs de mutation adaptés** :
+  - *Pour la substitution* : mutation par transposition de 2 lettres choisies aléatoirement dans l'alphabet de déchiffrement.
+  - *Pour la permutation* : mutation par découpage et translation d'un sous-bloc contigu de taille variable, garantissant une meilleure explorabilité de l'espace combinatoire que de simples inversions de positions contiguës.
+- **Cryptanalyse de Vigenère** :
+  - Variante par dictionnaire évaluant chaque mot-clé par log-vraisemblance sur la matrice de transition des digrammes (`attack_vigenere.py`).
+  - Variante analytique complète couplant recherche de la période par Indice de Coïncidence et résolution colonne par colonne par minimisation du $\chi^2$ (`attack_vigenere_ic.py`).
+
+
+## Choix d'implémentation
+
+- **Adaptation dynamique du nombre d'itérations selon la longueur de clé ($l!$)** : Pour une permutation de longueur $l=2$ (seulement 2 clés possibles : `[0, 1]` et `[1, 0]`) ou $l=3$ (6 clés), effectuer 15 000 itérations est inutile et coûteux. Le programme adapte automatiquement le nombre d'itérations selon la taille de l'espace combinatoire : $\min(\text{iterations}, \max(60, l! \times 5))$, rendant l'évaluation des petites longueurs quasi-instantanée.
+- **Synthèse automatisée du meilleur résultat global** : À la fin de l'exécution, le script compare les meilleurs scores obtenus entre la substitution et toutes les longueurs de permutation testées, et affiche directement le verdict avec le format standardisé : `Affichage meilleur résultat (Substitution/Permutation | Score = …)`.
+- **Passage du score en échelle logarithmique ($\log S(k)$)** : La formule théorique $S(k) = \prod_{(x,y)} r(x,y)^{f_k(x,y)}$ impliquant des produits de puissances astronomiques, elle mène inévitablement à un débordement de capacité numérique (overflow). Le calcul est transformé en somme de logarithmes $\log S(k) = \sum f_k(x,y) \cdot \ln(r(x,y))$, rendant l'algorithme numériquement stable.
+- **Lissage additif de Laplace ($+1$)** : Application systématique d'une constante de lissage sur les effectifs de référence ($r(x,y) = 1 + \text{occ}$) et les probabilités de lettres, empêchant toute divergence mathématique par $\ln(0)$ ou division par zéro lors des tests d'adéquation.
+- **Mémoïsation et mise en cache mémoire** : Utilisation d'un dictionnaire de cache (`_CACHE_FREQUENCES`) pour conserver les statistiques des pages Wikipédia une fois téléchargées, évitant ainsi les requêtes réseau superflues et accélérant les exécutions ultérieures.
+- **Mémorisation du Top-N des meilleures clés uniques** : La chaîne de Markov conservant une probabilité d'accepter des transitions vers des états moins crédibles (pour échapper aux optimums locaux), l'algorithme maintient une mémoire tampon des 5 meilleures solutions distinctes rencontrées au fil de la trajectoire pour ne jamais perdre l'optimum global.
+- **Contournement de la limite système de saisie (`MAX_CANON`)** : Sur macOS et systèmes POSIX, le buffer d'entrée canonique du terminal est restreint à 1 024 octets, bloquant la touche Entrée lors du collage de cryptogrammes longs. Le code propose une option de chargement direct par fichier texte (`texte.txt`, `crypto01.txt`, `crypto02.txt`) ainsi qu'une saisie multiligne avec validation assouplie.
+
+
+## Tests unitaires et d'intégration
+
+Une suite complète de 29 tests automatisés est fournie dans `test_projet.py` pour valider l'ensemble des modules :
+- **Chiffrements de base** : Réversibilité et cas limites pour César et Vigenère.
+- **Normalisation et outils** : Suppression d'accents, ligatures (Œ, Æ), préservation multilingue (ß), API Wikipédia.
+- **Substitution et Permutation** : Conservation des bijections, validité des clés inverses, exemple de l'énoncé.
+- **Modélisation de Markov** : Calcul des digrammes, normalisation stochastique de la matrice (somme par ligne = 1), simulation.
+- **Algorithme MCMC** : Pertinence de la fonction score log, conservation de la validité des clés après mutation.
+- **Intégration de bout en bout** : Pipeline complet d'attaque fréquentielle César et vérification de l'intégrité des fichiers cryptogrammes fournis (`crypto01.txt`, `crypto02.txt`).
+
+Exécution de la suite de tests (avec affichage soigné, chronométrage et couleurs) :
+```bash
+python3 test_projet.py
+```
+*(Ou en mode standard `unittest` : `python3 -m unittest test_projet.py -v`)*

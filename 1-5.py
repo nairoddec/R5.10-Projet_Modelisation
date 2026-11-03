@@ -1,31 +1,44 @@
+"""
+Projet Modélisations Mathématiques (R5.10) - Section 1.5 : Attaque MCMC
+
+Principe général :
+On veut décoder un texte sans connaître la clé secrète.
+Pour cela, on utilise l'algorithme MCMC (Markov Chain Monte Carlo) :
+1. On part d'une clé au hasard.
+2. À chaque étape, on modifie légèrement la clé (mutation).
+3. On regarde si le texte obtenu "ressemble plus" à du français grâce aux paires de lettres (bigrammes).
+4. Si c'est meilleur, on garde la clé. Si c'est moins bon, on l'accepte parfois pour éviter de se bloquer.
+5. On teste automatiquement la Substitution et la Permutation, puis on affiche le vainqueur.
+"""
+
 import math
 import random
 
-## Importation des fonctions
-# 1.2
+## Importation des fonctions utiles des autres fichiers
+# Statistiques sur les paires de lettres (bigrammes)
 from outils_digrammes import statistiques_digrammes 
+# Outils de nettoyage et téléchargement Wikipédia
 from fonction_outils import recuperer_texte_mediawiki, nettoyer_texte
-# 1.3
+# Chiffrement / Déchiffrement par substitution (remplacement de lettres)
 from substitution import chiffrer, dechiffrer, extraire_alphabet, generer_cle_aleatoire
-# 1.4
+# Chiffrement / Déchiffrement par permutation (mélange de positions)
 from permutation import dechiffrer_permutation, chiffrer_permutation
 
 
 def saisir_texte_multiligne(invite) :
     """
-    Lit un texte sur PLUSIEURS lignes (un Ctrl+V de texte multiligne fonctionne).
-    La saisie s'arrête quand on tape FIN seul sur une ligne (ou fin de saisie : Ctrl+Z puis
-    Entrée sous Windows, Ctrl+D sous Linux/Mac). Le texte est renvoyé tel que collé,
-    avec ses retours à la ligne.
+    Lit un texte sur une ou plusieurs lignes.
+    La saisie se termine en appuyant sur Entrée sur une ligne vide, ou en tapant FIN.
     """
-    print(f"{invite}\n(terminez en tapant FIN seul sur une nouvelle ligne)")
+    print(f"{invite}\n(collez votre texte, puis appuyez 2× sur Entrée pour valider) :")
     lignes = []
     while True :
         try :
             ligne = input()
         except EOFError :
             break
-        if ligne.strip().upper() == "FIN" :
+        nettoyee = ligne.strip()
+        if nettoyee.upper() == "FIN" or (not nettoyee and lignes):
             break
         lignes.append(ligne)
     return "\n".join(lignes)
@@ -247,7 +260,7 @@ def attaque_permutation_toutes_longueurs(cryptogramme, stats_reference, l_min = 
     Lance l'attaque MCMC pour chaque longueur de clé l = l_min, ..., l_max
     (comme demandé dans le sujet : l = 2, puis l = 3, etc.).
     Renvoie un dictionnaire {l: liste des top_n solutions (score, cle, texte)}.
-    L'humain choisit ensuite entre toutes les propositions.
+    Le nombre d'itérations est adapté à la taille de l'espace des clés (l!).
     """
     # On ne connaît pas la longueur de la clé : on les essaie toutes
     resultats = {}
@@ -255,8 +268,14 @@ def attaque_permutation_toutes_longueurs(cryptogramme, stats_reference, l_min = 
         # Le cryptogramme doit être un multiple de l : on tronque le reste
         reste = len(cryptogramme) % l
         crypto_l = cryptogramme if reste == 0 else cryptogramme[:-reste]
+
+        # Adaptation du nombre d'itérations selon la factorielle l! :
+        # Inutile de faire 15000 itérations pour l=2 (2 clés) ou l=3 (6 clés)
+        nb_permutations = math.factorial(l)
+        iter_l = min(iterations, max(60, nb_permutations * 5))
+
         resultats[l] = attaque_mcmc_permutation(crypto_l, stats_reference, longueur_cle=l,
-                                                iterations=iterations, top_n=top_n)
+                                                iterations=iter_l, top_n=top_n)
     return resultats
 
 
@@ -264,83 +283,92 @@ def attaque_permutation_toutes_longueurs(cryptogramme, stats_reference, l_min = 
 #  PROGRAMME PRINCIPAL
 
 if __name__ == "__main__" :
-    # 1. RÉCUPÉRATION DES STATISTIQUES DE RÉFÉRENCE
+    # =========================================================================
+    # 1. RÉCUPÉRATION DES STATISTIQUES DE RÉFÉRENCE (La langue française)
+    # =========================================================================
+    # On télécharge un article Wikipédia pour apprendre les paires de lettres
+    # naturelles du français (les bigrammes comme 'ES', 'DE', 'QU', etc.)
     print("\nRécupération de la page Wikipédia de référence (https://fr.wikipedia.org/wiki/Château) pour les statistiques de digrammes")
-    texte_brut_ref = recuperer_texte_mediawiki("https://fr.wikipedia.org/wiki/Château") # grâce à fonction_outils.py
-    stats_digrammes_ref = statistiques_digrammes(nettoyer_texte(texte_brut_ref)) # grâce à outils_digrammes.py
+    texte_brut_ref = recuperer_texte_mediawiki("https://fr.wikipedia.org/wiki/Château")
+    stats_digrammes_ref = statistiques_digrammes(nettoyer_texte(texte_brut_ref))
     
+    # =========================================================================
     # 2. SAISIE DU TEXTE À ANALYSER
+    # =========================================================================
     print("\n" + "="*19)
     print("  SAISIE DU TEXTE  ")
     print("="*19)
     
-    # Soit une page Wikipédia, soit un texte tapé/collé par l'utilisateur
-    choix = input("Voulez-vous fournir une URL Wikipédia (1) ou taper/coller le texte directement (2) ? [1/2] : ").strip()
+    # Trois modes possibles : lien Wikipédia, copier-coller, ou fichier texte (ex: crypto01.txt)
+    print("1. Fournir une URL Wikipédia")
+    print("2. Taper / coller le texte directement")
+    print("3. Lire depuis un fichier texte (recommandé pour les longs textes)")
+    choix = input("Votre choix [1/2/3] (défaut 2) : ").strip() or "2"
     
     if choix == "1" :
         url_user = input("Entrez l'URL (ex : https://fr.wikipedia.org/wiki/Cryptographie) : ").strip()
         texte_brut_user = recuperer_texte_mediawiki(url_user)
+    elif choix == "3" :
+        fichier_nom = input("Nom ou chemin du fichier (ex: texte.txt) [défaut texte.txt] : ").strip() or "texte.txt"
+        with open(fichier_nom, "r", encoding="utf-8") as f:
+            texte_brut_user = f.read()
+        print(f"Fichier '{fichier_nom}' chargé avec succès ({len(texte_brut_user)} caractères).")
     else :
-        # input() ne lit qu'UNE ligne : on utilise une saisie multiligne (terminée par FIN)
+        # Saisie directe au clavier
         texte_brut_user = saisir_texte_multiligne("Collez ou tapez votre texte ici :")
         
-    # Si le texte est déjà un cryptogramme, on l'attaque tel quel ;
-    # sinon on le chiffre nous-mêmes pour pouvoir tester l'attaque.
+    # On demande si le texte est déjà codé ou s'il s'agit d'un texte clair à tester
     est_deja_chiffre = input("\nCe texte est-il déjà chiffré ? (o/n) : ").strip().lower()
 
     if est_deja_chiffre == 'o' :
-        # IMPORTANT : on NE nettoie PAS un cryptogramme. Dans une permutation (ou une
-        # substitution avec espace), les espaces sont des caractères du cryptogramme :
-        # nettoyer_texte() fusionnerait les espaces consécutifs et décalerait les blocs.
+        # Pour un texte chiffré, on garde les espaces intacts pour ne pas casser l'alignement
         texte_propre_user = texte_brut_user.replace("\r", "").replace("\n", "")
     else :
-        # Conversion en texte brut (27 caractères : majuscules, espaces, sans accents)
+        # Pour un texte clair, on le nettoie (majuscules A-Z et espaces simples)
         texte_propre_user = nettoyer_texte(texte_brut_user)
 
-    # Un texte trop court donne trop peu de bigrammes pour que le score soit discriminant
+    # Avertissement si le texte est trop court (il faut assez de lettres pour les statistiques)
     if len(texte_propre_user) < 300 :
         print("\n[Attention] Votre texte fait moins de 300 caractères. L'attaque MCMC risque de manquer de données statistiques pour converger parfaitement.")
 
-
-    # On limite la longueur
-    # (plus de texte = meilleur déchiffrement mais calcul plus long ;
-    #  chaque itération recompte les bigrammes de tout le texte)
+    # On limite la taille pour garder un temps de calcul raisonnable
     texte_cible_sub = texte_propre_user[:5000]   # substitution
-    texte_cible_perm = texte_propre_user[:1000]   # permutation
+    texte_cible_perm = texte_propre_user[:1000]  # permutation
     
-    # 3. CHIFFREMENT DU TEXTE POUR LE TEST (si nécessaire)
+    # =========================================================================
+    # 3. CHIFFREMENT DE TEST (uniquement si le texte entré était en clair)
+    # =========================================================================
     if est_deja_chiffre == 'n' :
         print("\nChiffrement secret du texte en cours pour le test")
-        # Substitution : clé secrète aléatoire sur les caractères du texte
+        # Substitution aléatoire
         alphabet_test = extraire_alphabet(texte_cible_sub)
         cle_sec_sub = generer_cle_aleatoire(alphabet_test)
         crypto_sub = chiffrer(texte_cible_sub, cle_sec_sub)
         
-        # Permutation (longueur 4 fixée pour la simulation, mais l'attaque ne la connaît pas :
-        # elle testera toutes les longueurs de l_min à l_max)
+        # Permutation aléatoire (longueur 4 pour l'exemple)
         longueur_perm_secrete = 4
         cle_sec_perm = list(range(longueur_perm_secrete))
         random.shuffle(cle_sec_perm)
         crypto_perm = chiffrer_permutation(texte_cible_perm, cle_sec_perm)
-        # On affiche la clé secrète pour pouvoir vérifier si l'attaque la retrouve
         print(f"Clé de permutation secrète : {cle_sec_perm}")
     else :
-        # Texte déjà chiffré : on l'utilise tel quel pour les deux attaques
-        # (une seule des deux a du sens, selon le type de chiffrement utilisé)
+        # Le texte est déjà chiffré : on l'utilise directement
         crypto_sub = texte_cible_sub
         crypto_perm = texte_cible_perm
 
-    # Longueur maximale de clé à essayer pour la permutation (2, 3, ..., l_max)
+    # On demande jusqu'à quelle taille de bloc tester pour la permutation
     saisie_l_max = input("Pour l'attaque par permutation, tester les longueurs de clé de 2 jusqu'à ? (ex : 8) : ").strip()
     l_max_perm = int(saisie_l_max) if saisie_l_max else 8
 
 
+    # =========================================================================
     # 4. LANCEMENT DES ATTAQUES MCMC
+    # =========================================================================
     print("\n" + "="*31)
     print("  LANCEMENT DES ATTAQUES MCMC  ")
     print("="*31)
     
-    # --- Attaque sur la substitution : 25000 transitions de la chaîne ---
+    # --- A. Attaque sur l'hypothèse de la Substitution (25 000 itérations) ---
     print(f"\n- [SUBSTITUTION] Cryptogramme analysé (extrait) :\n{crypto_sub[:100]}...\n")
     famille_solutions_sub = attaque_mcmc_substitution(crypto_sub, stats_digrammes_ref, iterations = 25000, top_n = 5)
     
@@ -348,7 +376,7 @@ if __name__ == "__main__" :
     for rang, (score, cle, texte) in enumerate(famille_solutions_sub, 1) :
         print(f"[Solution #{rang}] Score : {score:.2f} | Extrait : {texte[:120]}...")
 
-    # --- Attaque sur la permutation : une chaîne par longueur de clé l ---
+    # --- B. Attaque sur l'hypothèse de la Permutation (test des longueurs de 2 à l_max) ---
     print(f"\n\n- [PERMUTATION] Cryptogramme analysé (extrait) :\n{crypto_perm[:100]}...\n")
     solutions_perm_par_l = attaque_permutation_toutes_longueurs(
         crypto_perm, stats_digrammes_ref, l_min = 2, l_max = l_max_perm, iterations = 15000, top_n = 5)
@@ -372,3 +400,28 @@ if __name__ == "__main__" :
     print("\n= RÉCAPITULATIF Substitution : Meilleures propositions")
     for rang, (score, cle, texte) in enumerate(famille_solutions_sub, 1) :
         print(f"[Solution #{rang}] Score : {score:.2f} | {texte[:80]}...")
+
+    # =========================================================================
+    # AFFICHAGE DU MEILLEUR RÉSULTAT GLOBAL (Substitution vs Permutation)
+    # =========================================================================
+    meilleur_sub = famille_solutions_sub[0]
+    meilleure_perm_toutes = max((sols[0] for sols in solutions_perm_par_l.values()), key=lambda x: x[0])
+
+    if meilleur_sub[0] >= meilleure_perm_toutes[0]:
+        type_vainqueur = "Substitution"
+        score_vainqueur = meilleur_sub[0]
+        texte_vainqueur = meilleur_sub[2]
+        cle_vainqueur = str(meilleur_sub[1])
+    else:
+        type_vainqueur = "Permutation"
+        score_vainqueur = meilleure_perm_toutes[0]
+        texte_vainqueur = meilleure_perm_toutes[2]
+        cle_vainqueur = str(meilleure_perm_toutes[1])
+
+    print("\n" + "="*80)
+    print(f"Affichage meilleur résultat ({type_vainqueur} | Score = {score_vainqueur:.2f})")
+    print("="*80)
+    print(f"Clé trouvée : {cle_vainqueur}")
+    print("\nExtrait du texte déchiffré :")
+    print(texte_vainqueur[:500] + ("..." if len(texte_vainqueur) > 500 else ""))
+    print("="*80 + "\n")

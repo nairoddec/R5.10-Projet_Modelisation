@@ -1,4 +1,5 @@
 # Permet de chiffrer et déchiffrer un message avec le chiffre de Vigenère.
+# Chaque lettre est décalée selon la lettre correspondante de la clé (ex: avec CLE : +2, +11, +4).
 
 def chiffrement_vigenere(texte, cle):
     resultat = ""
@@ -8,7 +9,7 @@ def chiffrement_vigenere(texte, cle):
         if caractere == ' ':
             resultat += ' '
         else:
-            # Récupère la lettre de la clé correspondante
+            # Récupère la lettre de la clé correspondante (en boucle grâce au modulo)
             lettre_cle = cle[index_cle % len(cle)]
             decalage = ord(lettre_cle) - 65
             

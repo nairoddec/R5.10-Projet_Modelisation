@@ -1,3 +1,6 @@
+# Chiffrement par substitution monoalphabétique (Section 1.3 du sujet).
+# Chaque caractère (y compris l'espace) est remplacé par un autre caractère selon une table de correspondance.
+
 import random
 from fonction_outils import recuperer_texte_mediawiki, nettoyer_texte
 
@@ -8,6 +11,7 @@ def extraire_alphabet(texte: str) -> list[str]:
 
 def generer_cle_aleatoire(alphabet: list[str]) -> dict[str, str]:
     """Crée une permutation aléatoire de l'alphabet (27 caractères)."""
+    # On mélange l'alphabet et on associe chaque lettre d'origine à une lettre mélangée
     alphabet_melange = alphabet.copy()
     random.shuffle(alphabet_melange)
     return dict(zip(alphabet, alphabet_melange))
@@ -19,7 +23,7 @@ def verifier_cle(cle: dict[str, str], alphabet: list[str]) -> bool:
     return True
 
 def inverser_cle(cle: dict[str, str]) -> dict[str, str]:
-    """Construit l'inverse de la clé."""
+    """Construit l'inverse de la clé : {chiffré -> clair} pour déchiffrer."""
     return {valeur: origine for origine, valeur in cle.items()}
 
 def chiffrer(texte_clair: str, cle: dict[str, str]) -> str:
@@ -27,7 +31,7 @@ def chiffrer(texte_clair: str, cle: dict[str, str]) -> str:
     return "".join(cle.get(caractere, caractere) for caractere in texte_clair)
 
 def dechiffrer(texte_chiffre: str, cle: dict[str, str]) -> str:
-    """Déchiffre le texte avec la clé connue."""
+    """Déchiffre le texte avec la clé connue (en appliquant la clé inverse)."""
     return chiffrer(texte_chiffre, inverser_cle(cle))
 
 if __name__ == "__main__":

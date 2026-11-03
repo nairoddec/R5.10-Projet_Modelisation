@@ -1,3 +1,7 @@
+# Chiffrement par permutation de positions (Section 1.4 du sujet).
+# On ne change pas les lettres, mais on mélange leur ordre à l'intérieur
+# de blocs de longueur fixe l selon une clé (ex: [3, 0, 2, 1] pour l=4).
+
 from fonction_outils import recuperer_texte_mediawiki, nettoyer_texte
 
 def verifier_cle_permutation(cle: list[int]) -> bool:
@@ -14,7 +18,7 @@ def verifier_cle_permutation(cle: list[int]) -> bool:
 
 
 def inverser_cle_permutation(cle: list[int]) -> list[int]:
-    """Construit la clé inverse."""
+    """Construit la clé inverse pour replacer les lettres à leur position d'origine."""
     cle_inverse = [0] * len(cle)
 
     for position_initiale, nouvelle_position in enumerate(cle):
@@ -24,14 +28,16 @@ def inverser_cle_permutation(cle: list[int]) -> list[int]:
 
 
 def chiffrer_permutation(texte: str, cle: list[int]) -> str:
-    """Chiffre le texte par permutation de blocs."""
+    """Chiffre le texte par permutation de blocs de longueur fixe."""
     longueur = len(cle)
 
+    # Si le dernier bloc est incomplet, on le complète avec des espaces
     espaces_manquants = (longueur - len(texte) % longueur) % longueur
     texte += " " * espaces_manquants
 
     texte_chiffre = []
 
+    # On découpe en blocs et on réordonne les positions selon la clé
     for i in range(0, len(texte), longueur):
         bloc = texte[i:i + longueur]
         bloc_melange = [""] * longueur

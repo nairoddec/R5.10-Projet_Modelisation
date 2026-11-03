@@ -1,6 +1,7 @@
 # Permet de chiffrer et déchiffrer un message avec le chiffre de César.
 
 def chiffrement_cesar(texte, decalage):
+    # Décale chaque lettre de 'decalage' positions dans l'alphabet (65 = 'A' en ASCII)
     resultat = ""
     for caractere in texte:
         if caractere == ' ':
@@ -11,6 +12,5 @@ def chiffrement_cesar(texte, decalage):
     return resultat
 
 def dechiffrement_cesar(texte_chiffre, decalage):
+    # Pour déchiffrer, on applique le décalage opposé (-decalage)
     return chiffrement_cesar(texte_chiffre, -decalage)
-
-

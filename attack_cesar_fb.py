@@ -1,6 +1,7 @@
 # Permet de chiffrer et déchiffrer un message avec le chiffre de César.
 
 def chiffrement_cesar(texte, decalage):
+    # Décale chaque lettre de 'decalage' rangs dans l'alphabet (ex: avec 3, A devient D)
     resultat = ""
 
     for caractere in texte:
@@ -14,11 +15,13 @@ def chiffrement_cesar(texte, decalage):
 
 
 def dechiffrement_cesar(texte_chiffre, decalage):
+    # Pour déchiffrer, on décale simplement dans l'autre sens (-decalage)
     return chiffrement_cesar(texte_chiffre, -decalage)
 
 
 def attaque_force_brute_cesar(texte_chiffre):
     """Affiche les 26 déchiffrements possibles."""
+    # Force brute : on essaie les 26 décalages possibles (de 0 à 25)
     print("Début de l'attaque en force brute\n")
 
     for decalage in range(26):

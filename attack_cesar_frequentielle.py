@@ -143,9 +143,29 @@ def _chiffrer_texte() -> None:
 
 
 def _attaquer_cryptogramme() -> None:
-    """Lance l'attaque fréquentielle sur un message chiffré."""
-    texte_chiffre, source_crypto = saisir_texte_utilisateur("le cryptogramme")
-    texte_chiffre = nettoyer_texte(texte_chiffre)
+    print("\nSource du cryptogramme :")
+    print("1. Coller le texte directement")
+    print("2. Lire depuis un fichier (ex: texte.txt) [recommandé pour textes > 1000 caractères]")
+    choix_source = input("Votre choix (1 ou 2, défaut 1) : ").strip() or "1"
+
+    if choix_source == "2":
+        nom_fich = input("Nom ou chemin du fichier (défaut texte.txt) : ").strip() or "texte.txt"
+        with open(nom_fich, "r", encoding="utf-8") as f:
+            texte_brut = f.read()
+        source_crypto = f"fichier '{nom_fich}'"
+    else:
+        print("\nCollez le cryptogramme ci-dessous")
+        print("(puis appuyez 2× sur Entrée pour valider) :")
+        lignes = []
+        while True:
+            ligne = input()
+            if not ligne.strip():
+                break
+            lignes.append(ligne)
+        texte_brut = " ".join(lignes)
+        source_crypto = "texte saisi"
+
+    texte_chiffre = nettoyer_texte(texte_brut)
     if not texte_chiffre:
         raise ValueError("Le cryptogramme ne contient aucune lettre.")
 
