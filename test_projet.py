@@ -123,8 +123,8 @@ class PrettyTestResult(unittest.TestResult):
         elapsed = (time.perf_counter() - self.start_times.get(test.id(), 0)) * 1000
         method_name = test._testMethodName
         self.stream.write(
-            f"  {Color.CYAN}│{Color.RESET}  {Color.GREEN}✔{Color.RESET} "
-            f"{Color.WHITE}{method_name:<48}{Color.RESET} "
+            f"  {Color.CYAN}│{Color.RESET}  "
+            f"{Color.WHITE}{method_name:<50}{Color.RESET} "
             f"[{Color.GREEN}PASS{Color.RESET}]  {Color.DIM}{elapsed:6.2f} ms{Color.RESET}\n"
         )
         self.stream.flush()
@@ -134,8 +134,8 @@ class PrettyTestResult(unittest.TestResult):
         elapsed = (time.perf_counter() - self.start_times.get(test.id(), 0)) * 1000
         method_name = test._testMethodName
         self.stream.write(
-            f"  {Color.CYAN}│{Color.RESET}  {Color.RED}✖{Color.RESET} "
-            f"{Color.BOLD}{method_name:<48}{Color.RESET} "
+            f"  {Color.CYAN}│{Color.RESET}  "
+            f"{Color.BOLD}{method_name:<50}{Color.RESET} "
             f"[{Color.RED}FAIL{Color.RESET}]  {Color.DIM}{elapsed:6.2f} ms{Color.RESET}\n"
         )
         self.stream.flush()
@@ -145,15 +145,15 @@ class PrettyTestResult(unittest.TestResult):
         elapsed = (time.perf_counter() - self.start_times.get(test.id(), 0)) * 1000
         method_name = test._testMethodName
         self.stream.write(
-            f"  {Color.CYAN}│{Color.RESET}  {Color.RED}✖{Color.RESET} "
-            f"{Color.BOLD}{method_name:<48}{Color.RESET} "
+            f"  {Color.CYAN}│{Color.RESET}  "
+            f"{Color.BOLD}{method_name:<50}{Color.RESET} "
             f"[{Color.RED}ERR!{Color.RESET}]  {Color.DIM}{elapsed:6.2f} ms{Color.RESET}\n"
         )
         self.stream.flush()
 
 
 class PrettyTestRunner:
-    """Test runner élégant avec bannières, couleurs ANSI et bilan récapitulatif."""
+    """Test runner sobre avec mise en page structurée et mesure de temps."""
 
     def __init__(self, stream=None, verbosity=1, **kwargs):
         self.stream = stream or sys.stdout
@@ -188,7 +188,7 @@ class PrettyTestRunner:
 
         self.stream.write(f"\n{Color.CYAN}{'═' * 78}{Color.RESET}\n")
         self.stream.write(
-            f"{Color.BOLD}{Color.WHITE}   SUITE DE VALIDATION DU PROJET (R5.10) - TESTS UNITAIRES & INTÉGRATION{Color.RESET}\n"
+            f"{Color.BOLD}{Color.WHITE}         TESTS UNITAIRES & INTÉGRATION (R5.10){Color.RESET}\n"
         )
         self.stream.write(f"{Color.CYAN}{'═' * 78}{Color.RESET}\n")
 
@@ -204,35 +204,35 @@ class PrettyTestRunner:
             self.stream.write(f"  {Color.CYAN}└{'─' * 74}{Color.RESET}\n")
 
         self.stream.write(f"\n{Color.CYAN}{'═' * 78}{Color.RESET}\n")
-        self.stream.write(f"{Color.BOLD}{Color.WHITE}                        BILAN DE L'EXÉCUTION{Color.RESET}\n")
+        self.stream.write(f"{Color.BOLD}{Color.WHITE}                             BILAN{Color.RESET}\n")
         self.stream.write(f"{Color.CYAN}{'═' * 78}{Color.RESET}\n")
 
         pct = (successes / total_tests * 100) if total_tests > 0 else 0
-        self.stream.write(f"  • Total des tests exécutés : {Color.BOLD}{total_tests}{Color.RESET}\n")
+        self.stream.write(f"  • Total des tests : {Color.BOLD}{total_tests}{Color.RESET}\n")
         self.stream.write(
-            f"  • Tests réussis           : {Color.GREEN}{Color.BOLD}{successes}{Color.RESET} ({pct:.1f}%)\n"
+            f"  • Succès          : {Color.GREEN}{Color.BOLD}{successes}{Color.RESET} ({pct:.1f}%)\n"
         )
 
         if failures > 0:
-            self.stream.write(f"  • Échecs                  : {Color.RED}{Color.BOLD}{failures}{Color.RESET}\n")
+            self.stream.write(f"  • Échecs          : {Color.RED}{Color.BOLD}{failures}{Color.RESET}\n")
         else:
-            self.stream.write(f"  • Échecs                  : {Color.DIM}0{Color.RESET}\n")
+            self.stream.write(f"  • Échecs          : {Color.DIM}0{Color.RESET}\n")
 
         if errors > 0:
-            self.stream.write(f"  • Erreurs                 : {Color.RED}{Color.BOLD}{errors}{Color.RESET}\n")
+            self.stream.write(f"  • Erreurs         : {Color.RED}{Color.BOLD}{errors}{Color.RESET}\n")
         else:
-            self.stream.write(f"  • Erreurs                 : {Color.DIM}0{Color.RESET}\n")
+            self.stream.write(f"  • Erreurs         : {Color.DIM}0{Color.RESET}\n")
 
-        self.stream.write(f"  • Durée totale d'exécution : {Color.YELLOW}{total_time:.3f} s{Color.RESET}\n")
+        self.stream.write(f"  • Durée totale    : {Color.YELLOW}{total_time:.3f} s{Color.RESET}\n")
         self.stream.write(f"{Color.CYAN}{'─' * 78}{Color.RESET}\n")
 
         if result.wasSuccessful():
             self.stream.write(
-                f"  {Color.GREEN}{Color.BOLD}✔ RÉSULTAT : TOUS LES TESTS SONT VALIDÉS AVEC SUCCÈS !{Color.RESET}\n"
+                f"  {Color.GREEN}{Color.BOLD}Statut : Tous les tests sont validés.{Color.RESET}\n"
             )
         else:
             self.stream.write(
-                f"  {Color.RED}{Color.BOLD}✖ RÉSULTAT : CERTAINS TESTS ONT ÉCHOUÉ.{Color.RESET}\n"
+                f"  {Color.RED}{Color.BOLD}Statut : Échec de certains tests.{Color.RESET}\n"
             )
             for t, err in result.failures:
                 self.stream.write(f"\n{Color.RED}ÉCHEC sur {t} :{Color.RESET}\n{err}\n")
