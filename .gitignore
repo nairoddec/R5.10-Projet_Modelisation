@@ -1,0 +1,15 @@
+# Environnements virtuels (ne pas synchroniser sur Git)
+.venv/
+venv/
+env/
+ENV/
+
+# Fichiers compilés et caches Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Fichiers système et extensions
+.DS_Store
+.embold/
+*.log

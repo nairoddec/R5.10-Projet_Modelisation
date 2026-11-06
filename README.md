@@ -2,11 +2,20 @@
 
 ## Hub de lancement (`main.py`)
 
-Un tableau de bord interactif centralise l'accès à l'ensemble des modules, chiffrements et attaques du projet avec une interface visuelle soignée en terminal (couleurs ANSI, arborescences UTF-8, chronométrage et gestion des interruptions Ctrl+C) :
+Un tableau de bord interactif centralise l'accès à l'ensemble des modules, chiffrements et attaques du projet avec une interface visuelle soignée en terminal (couleurs ANSI, arborescences UTF-8, chronométrage et gestion des interruptions Ctrl+C).
 
+Le projet est conçu en **zéro dépendance externe obligatoire** : il fonctionne immédiatement au lancement sur n'importe quelle machine (Linux, macOS, Windows) avec une installation standard de Python 3, sans nécessiter d'environnement virtuel ni d'accès à Internet.
+
+Lancement universel :
 ```bash
 python3 main.py
+# Ou via le script automatique Linux/macOS :
+./run.sh
+# Ou sous Windows :
+run.bat
 ```
+
+*(Si vous souhaitez utiliser un environnement virtuel avec NumPy, le fichier `requirements.txt` est également fourni à titre optionnel).*
 
 ### Fonctionnement du Hub
 
@@ -133,6 +142,7 @@ La chaîne de Markov construite par l'algorithme MCMC possède ces deux proprié
 - **Mémoïsation et mise en cache mémoire** : Utilisation d'un dictionnaire de cache (`_CACHE_FREQUENCES`) pour conserver les statistiques des pages Wikipédia une fois téléchargées, évitant ainsi les requêtes réseau superflues et accélérant les exécutions ultérieures.
 - **Mémorisation du Top-N des meilleures clés uniques** : La chaîne de Markov conservant une probabilité d'accepter des transitions vers des états moins crédibles (pour échapper aux optimums locaux), l'algorithme maintient une mémoire tampon des 5 meilleures solutions distinctes rencontrées au fil de la trajectoire pour ne jamais perdre l'optimum global.
 - **Contournement de la limite système de saisie (`MAX_CANON`)** : Sur macOS et systèmes POSIX, le buffer d'entrée canonique du terminal est restreint à 1 024 octets, bloquant la touche Entrée lors du collage de cryptogrammes longs. Le code propose une option de chargement direct par fichier texte (`texte.txt`, `crypto01.txt`, `crypto02.txt`) ainsi qu'une saisie multiligne avec validation assouplie.
+- **Portabilité universelle et zéro dépendance obligatoire** : La matrice stochastique de transitions $27 \times 27$ dispose d'une implémentation hybride pure Python (`MatriceTransitions`) et d'un tirage pondéré natif (`random.choices`). Si NumPy est présent, il est exploité ; s'il est absent, le projet fonctionne immédiatement à 100% de ses capacités sans nécessiter d'installation externe ni d'environnement virtuel, garantissant un démarrage instantané lors des évaluations orales.
 
 
 ## Tests unitaires et d'intégration

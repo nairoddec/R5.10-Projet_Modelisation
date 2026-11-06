@@ -9,8 +9,78 @@ Principe :
 
 from collections import Counter
 from fonction_outils import recuperer_texte_mediawiki, nettoyer_texte
+import random
 import unicodedata
-import numpy as np
+
+try:
+    import numpy as np
+    HAVE_NUMPY = True
+except ImportError:
+    np = None
+    HAVE_NUMPY = False
+
+
+class LigneMatrice(list):
+    """Ligne ou tranche de matrice avec méthodes statistiques compatibles NumPy."""
+    def sum(self) -> float:
+        return sum(self)
+
+    def __truediv__(self, other):
+        if isinstance(other, (int, float)):
+            return LigneMatrice([x / other if other != 0 else 0.0 for x in self])
+        return NotImplemented
+
+
+class MatriceTransitions:
+    """Matrice 2D native autonome (permet de fonctionner sans installer NumPy)."""
+    def __init__(self, data: list[list[float]]):
+        self._data = data
+        self.shape = (len(data), len(data[0]) if data else 0)
+
+    def __getitem__(self, item):
+        if isinstance(item, tuple) and len(item) == 2:
+            r, c = item
+            if isinstance(r, int) and isinstance(c, int):
+                return self._data[r][c]
+            elif isinstance(r, int) and isinstance(c, slice):
+                indices = range(*c.indices(self.shape[1]))
+                return LigneMatrice([self._data[r][idx] for idx in indices])
+            elif isinstance(r, slice) and isinstance(c, int):
+                indices = range(*r.indices(self.shape[0]))
+                return LigneMatrice([self._data[idx][c] for idx in indices])
+            elif isinstance(r, slice) and isinstance(c, slice):
+                r_indices = range(*r.indices(self.shape[0]))
+                c_indices = range(*c.indices(self.shape[1]))
+                return MatriceTransitions([[self._data[ri][ci] for ci in c_indices] for ri in r_indices])
+        elif isinstance(item, int):
+            return LigneMatrice(self._data[item])
+        raise IndexError(f"Indice de matrice non pris en charge : {item}")
+
+    def __setitem__(self, item, value):
+        if isinstance(item, tuple) and len(item) == 2:
+            self._data[item[0]][item[1]] = float(value)
+        elif isinstance(item, int):
+            self._data[item] = [float(x) for x in value]
+        else:
+            raise IndexError(f"Affectation non prise en charge : {item}")
+
+    def sum(self, axis=None, keepdims=False):
+        if axis is None:
+            return sum(sum(r) for r in self._data)
+        elif axis == 1:
+            res = [sum(r) for r in self._data]
+            return [[s] for s in res] if keepdims else res
+        elif axis == 0:
+            res = [sum(self._data[r][c] for r in range(self.shape[0])) for c in range(self.shape[1])]
+            return [res] if keepdims else res
+        raise ValueError(f"Axe non supporté : {axis}")
+
+    def __len__(self):
+        return self.shape[0]
+
+    def __iter__(self):
+        for row in self._data:
+            yield LigneMatrice(row)
 
 
 def extraire_alphabet(texte: str) -> list[str]:
@@ -39,36 +109,51 @@ def statistiques_digrammes(texte: str) -> dict:
 def construire_matrice_transitions(
     statistiques: dict,
     alphabet: list[str],
-) -> tuple[np.ndarray, dict, dict]:
+):
     """
     Construit la matrice de transitions 27x27 de la chaîne de Markov.
     La case (i, j) contient la probabilité qu'une lettre 'j' suive la lettre 'i'.
     Chaque ligne est normalisée pour que sa somme soit égale à 1.
+    Fonctionne avec NumPy si disponible, ou en Python standard natif.
     """
     taille = len(alphabet)
     char_to_idx = {c: i for i, c in enumerate(alphabet)}
     idx_to_char = {i: c for i, c in enumerate(alphabet)}
-    matrice = np.zeros((taille, taille))
 
-    # On remplit avec le nombre d'occurrences observées
-    for digramme, donnees in statistiques.items():
-        if len(digramme) == 2:
-            i = char_to_idx[digramme[0]]
-            j = char_to_idx[digramme[1]]
-            matrice[i, j] = donnees["occurrences"]
+    if HAVE_NUMPY:
+        matrice = np.zeros((taille, taille))
+        for digramme, donnees in statistiques.items():
+            if len(digramme) == 2 and digramme[0] in char_to_idx and digramme[1] in char_to_idx:
+                i = char_to_idx[digramme[0]]
+                j = char_to_idx[digramme[1]]
+                matrice[i, j] = donnees["occurrences"]
 
-    # Normalisation par ligne : la somme des probabilités de chaque ligne doit valoir 1
-    sommes_lignes = matrice.sum(axis=1, keepdims=True)
-    matrice = np.divide(
-        matrice, sommes_lignes,
-        out=np.zeros_like(matrice),
-        where=sommes_lignes != 0,
-    )
-    return matrice, char_to_idx, idx_to_char
+        sommes_lignes = matrice.sum(axis=1, keepdims=True)
+        matrice = np.divide(
+            matrice, sommes_lignes,
+            out=np.zeros_like(matrice),
+            where=sommes_lignes != 0,
+        )
+        return matrice, char_to_idx, idx_to_char
+    else:
+        donnees_matrice = [[0.0] * taille for _ in range(taille)]
+        for digramme, donnees in statistiques.items():
+            if len(digramme) == 2 and digramme[0] in char_to_idx and digramme[1] in char_to_idx:
+                i = char_to_idx[digramme[0]]
+                j = char_to_idx[digramme[1]]
+                donnees_matrice[i][j] = float(donnees["occurrences"])
+
+        for i in range(taille):
+            somme_ligne = sum(donnees_matrice[i])
+            if somme_ligne > 0:
+                donnees_matrice[i] = [val / somme_ligne for val in donnees_matrice[i]]
+
+        matrice = MatriceTransitions(donnees_matrice)
+        return matrice, char_to_idx, idx_to_char
 
 
 def afficher_matrice_transitions(
-    matrice: np.ndarray,
+    matrice,
     idx_to_char: dict,
     seuil: float = 0.0,
 ) -> None:
@@ -76,10 +161,10 @@ def afficher_matrice_transitions(
     taille = matrice.shape[0]
 
     colonnes_utilisees = [
-        j for j in range(taille) if matrice[:, j].sum() > seuil
+        j for j in range(taille) if (matrice[:, j].sum() if hasattr(matrice[:, j], 'sum') else sum(matrice[:, j])) > seuil
     ]
     lignes_utilisees = [
-        i for i in range(taille) if matrice[i, :].sum() > seuil
+        i for i in range(taille) if (matrice[i, :].sum() if hasattr(matrice[i, :], 'sum') else sum(matrice[i, :])) > seuil
     ]
 
     def etiquette(c: str) -> str:
@@ -100,7 +185,7 @@ def afficher_matrice_transitions(
 
 
 def generer_texte_markov(
-    matrice: np.ndarray,
+    matrice,
     char_to_idx: dict,
     idx_to_char: dict,
     longueur: int = 50,
@@ -117,13 +202,17 @@ def generer_texte_markov(
         idx_actuel = char_to_idx[etat_actuel]
         probabilites = matrice[idx_actuel]
 
-        if probabilites.sum() == 0:
-            probabilites = np.ones(taille) / taille
+        somme_p = sum(probabilites) if not hasattr(probabilites, 'sum') else probabilites.sum()
+        if somme_p == 0:
+            p_normalisees = [1.0 / taille] * taille
         else:
-            probabilites = probabilites / probabilites.sum()
+            p_normalisees = [p / somme_p for p in probabilites]
 
-        # Tirage aléatoire pondéré par les probabilités de transition
-        prochain_idx = np.random.choice(taille, p=probabilites)
+        if HAVE_NUMPY and isinstance(matrice, np.ndarray):
+            prochain_idx = int(np.random.choice(taille, p=p_normalisees))
+        else:
+            prochain_idx = random.choices(range(taille), weights=p_normalisees)[0]
+
         texte.append(idx_to_char[prochain_idx])
     return "".join(texte)
 
