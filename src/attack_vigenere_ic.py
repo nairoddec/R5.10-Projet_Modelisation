@@ -142,7 +142,7 @@ def retrouver_cle(cryptogramme: str, longueur: int, alphabet: list[str],
 # 3. Affichage
 
 def afficher_profil(profil: dict[int, float], ic_fr: float, ic_alea: float,
-                    fichier_png: str = "profil_ic_vigenere.png") -> None:
+                    fichier_png: str = "docs/profil_ic_vigenere.png") -> None:
     """Graphique matplotlib si disponible, sinon barres en texte."""
     try:
         import matplotlib

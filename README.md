@@ -8,7 +8,7 @@ Le projet est conçu en **zéro dépendance externe obligatoire** : il fonctionn
 
 Lancement universel :
 ```bash
-python3 main.py
+python3 src/main.py
 # Ou via le script automatique Linux/macOS :
 ./run.sh
 # Ou sous Windows :
@@ -159,6 +159,5 @@ Une suite complète de 29 tests automatisés est fournie dans `test_projet.py` p
 
 Exécution de la suite de tests (avec affichage soigné, chronométrage et couleurs) :
 ```bash
-python3 test_projet.py
+python3 src/test_projet.py
 ```
-*(Ou en mode standard `unittest` : `python3 -m unittest test_projet.py -v`)*

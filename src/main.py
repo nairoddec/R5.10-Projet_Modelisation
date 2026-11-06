@@ -15,7 +15,7 @@ import os
 import random
 import subprocess
 import sys
-import time
+import time 
 
 # Couleurs ANSI
 class Color:
